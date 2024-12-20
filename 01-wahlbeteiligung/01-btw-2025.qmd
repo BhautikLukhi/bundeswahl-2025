@@ -1,0 +1,137 @@
+---
+title: "01 Wahlbeteiligung"
+---
+
+## Wahlbeteiligung
+
+Quelle: <https://www.bundeswahlleiterin.de/bundestagswahlen/2021/ergebnisse/repraesentative-wahlstatistik.html>
+
+```{r setup}
+library(tidyverse)
+library(ggtext)
+library(gganimate)
+library(gt)
+```
+
+## Datenvorbereitung
+
+Daten der repräsentativen Wahlstatistik herunterladen.
+
+```{r load-data}
+url <- 
+"https://www.bundeswahlleiterin.de/dam/jcr/f920aa03-a0b1-45a5-8e65-7902a67259d7/btw_rws_wb-1953.csv"
+df_wbt <- read_csv2(
+  url, skip = 15,
+  col_names = c("wahl", "geschlecht", "altersgruppe", "wahlberechtigte",
+                "wahlberechtige_ohne_wahlscheinvermerk",
+                "wahlberechtige_mit_wahlscheinvermerk",
+                "waehler", "wahlbeteiligung"))
+```
+
+## Datenexploration
+
+Die Altersgruppen wurden über Zeit unterschiedlich gebildet und erst ab 1972 waren 18-jährige wahlberechtigt.
+
+```{r wbt-elections-table}
+df_wbt |> 
+  filter(altersgruppe != "Summe") |> 
+  distinct(wahl, altersgruppe) |>
+  mutate(dummy = "x") |> 
+  pivot_wider(id_cols = altersgruppe, names_from = "wahl", values_from = dummy, values_fill = "") |> 
+  arrange(altersgruppe) |> 
+  knitr::kable()
+
+```
+
+Als Timeline/Gantt-Chart.
+
+Für die BTWen bis einschließlich 1961 verliert man Granularität in den Altersgruppen.
+
+```{r}
+df_wbt |> 
+  filter(altersgruppe != "Summe") |> 
+  distinct(wahl, altersgruppe) |>
+  mutate(
+    altersgruppe_lower = str_extract(altersgruppe, "(\\d{2})\\s", group = 1),
+    altersgruppe_upper = str_extract(altersgruppe, "\\d{2}\\s.+(\\d{2})", group = 1),
+    altersgruppe_upper = ifelse(altersgruppe == "70 und mehr", 90, altersgruppe_upper),
+    across(c(altersgruppe_lower, altersgruppe_upper), as.integer),
+    wahl = factor(wahl)
+  ) |> 
+  ggplot(
+    aes(color = altersgruppe_lower)
+  ) +
+  geom_segment(
+    aes(x = altersgruppe_lower + 0.1, xend = altersgruppe_upper - 0.1, y = wahl, yend = wahl),
+    linewidth = 2.5, lineend = "square"
+  ) +
+  scale_color_gradient(low = "grey2", high = "grey90") +
+  guides(color = "none") +
+  theme_minimal()
+  
+```
+
+Betrachtung der Bundestagswahlen ab 1972, weil der Zuschnitt der Altersgruppen seit der Herabsetzung der Volljährigkeitsgrenze auf 18 Jahre konstant ist.
+
+```{r}
+df_wbt_total_ab1972 <- df_wbt |>  
+  group_by(wahl, altersgruppe) |> 
+  filter(geschlecht == "Summe", wahl >= 1972)
+
+# df_wbt_total_ab1972 |>  
+#   group_by(wahl, altersgruppe) |> 
+#   filter(geschlecht == "Summe", wahl >= 1972) |> 
+#   # mutate(altersgruppe = fct_inorder(altersgruppe)) |> 
+#   pivot_wider(id_cols = "wahl", names_from = "altersgruppe", values_from = "wahlbeteiligung") |> gt()
+```
+
+## Datenvisualisierungen
+
+### Wahlbeteiligung nach Altersgruppen über Zeit 
+
+Animation
+
+```{r wbt-altersgruppen-animation, gganimate = list(nframes = 100, fps = 12)}
+p <- df_wbt_total_ab1972 |> 
+  filter(altersgruppe != "Summe") |> 
+  # mutate(wahl = factor(wahl)) |> 
+  ggplot(aes(altersgruppe, wahlbeteiligung, group = wahl)) +
+  geom_line(color = "purple", size = 1.2) +
+  geom_text(
+    data = ~subset(., altersgruppe == max(altersgruppe)),
+    aes(x = altersgruppe, 
+        y = wahlbeteiligung,
+        label = wahl), 
+    color = "purple", hjust = 0, nudge_x = 0.1, family = "Roboto Condensed", size = 5,
+    fontface = "bold"
+  ) +
+  scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.8))) +
+  scale_y_continuous(labels = function(x) paste(x, "%")) +
+  coord_cartesian(clip = "off") +
+  theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
+  theme(
+    plot.background = element_rect(color = "#F6F6F3")
+  )
+
+p_anim <- p +
+  transition_states(wahl) +
+  shadow_mark(past = TRUE, future = FALSE, 
+              alpha = 0.2, size = size / 4, colour = "grey60")
+
+
+n_wahlen <- length(unique(df_wbt_total_ab1972$wahl))
+
+animate(p_anim, fps = 10, nframes = 100, end_pause = 10)
+```
+
+```{r}
+
+```
+
+### Wahlbeteiligung nach Altersgruppe 2021
+
+Marimekko-Chart, das die Größe der Altersgruppen auf der x-Achse abbildet, y–Achse Wahlbeteiligung. Fläche der Rechtecke ergibt die Anzahl der Wähler in der jeweiligen Altersgruppe.
+
+Ggf. animiert über Zeit oder 2-3 Charts, um die Veränderungen der Zusammensetzung der Wählerschaft darzustellen.
+
+Ggf. nur Anteil der Wähler nach Altersgruppe? Weniger Komplexität als das Marimekko-Chart.
