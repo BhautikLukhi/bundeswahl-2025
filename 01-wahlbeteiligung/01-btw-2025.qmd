@@ -2,7 +2,7 @@
 title: "01 Wahlbeteiligung"
 ---
 
-## Wahlbeteiligung
+## Datenquelle
 
 Quelle: <https://www.bundeswahlleiterin.de/bundestagswahlen/2021/ergebnisse/repraesentative-wahlstatistik.html>
 
@@ -77,12 +77,6 @@ Betrachtung der Bundestagswahlen ab 1972, weil der Zuschnitt der Altersgruppen s
 df_wbt_total_ab1972 <- df_wbt |>  
   group_by(wahl, altersgruppe) |> 
   filter(geschlecht == "Summe", wahl >= 1972)
-
-# df_wbt_total_ab1972 |>  
-#   group_by(wahl, altersgruppe) |> 
-#   filter(geschlecht == "Summe", wahl >= 1972) |> 
-#   # mutate(altersgruppe = fct_inorder(altersgruppe)) |> 
-#   pivot_wider(id_cols = "wahl", names_from = "altersgruppe", values_from = "wahlbeteiligung") |> gt()
 ```
 
 ## Datenvisualisierungen
@@ -116,12 +110,14 @@ p <- df_wbt_total_ab1972 |>
 p_anim <- p +
   transition_states(wahl) +
   shadow_mark(past = TRUE, future = FALSE, 
-              alpha = 0.2, size = size / 4, colour = "grey60")
+              alpha = 0.2, size = size / 4, colour = "grey60", 
+              # Jahreszahlen nicht mitführen
+              exclude_layer = 2)
 
 
 n_wahlen <- length(unique(df_wbt_total_ab1972$wahl))
 
-animate(p_anim, fps = 10, nframes = 100, end_pause = 10)
+animate(p_anim, fps = 10, nframes = 100, end_pause = 20, rewind = FALSE)
 ```
 
 ```{r}

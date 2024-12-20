@@ -96,8 +96,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="wahlbeteiligung" class="level2">
-<h2 class="anchored" data-anchor-id="wahlbeteiligung">Wahlbeteiligung</h2>
+<section id="datenquelle" class="level2">
+<h2 class="anchored" data-anchor-id="datenquelle">Datenquelle</h2>
 <p>Quelle: <a href="https://www.bundeswahlleiterin.de/bundestagswahlen/2021/ergebnisse/repraesentative-wahlstatistik.html" class="uri">https://www.bundeswahlleiterin.de/bundestagswahlen/2021/ergebnisse/repraesentative-wahlstatistik.html</a></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -483,13 +483,7 @@ dbl (6): wahl, wahlberechtigte, wahlberechtige_ohne_wahlscheinvermerk, wahlb...
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>df_wbt_total_ab1972 <span class="ot">&lt;-</span> df_wbt <span class="sc">|&gt;</span>  </span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(wahl, altersgruppe) <span class="sc">|&gt;</span> </span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(geschlecht <span class="sc">==</span> <span class="st">"Summe"</span>, wahl <span class="sc">&gt;=</span> <span class="dv">1972</span>)</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># df_wbt_total_ab1972 |&gt;  </span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#   group_by(wahl, altersgruppe) |&gt; </span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">#   filter(geschlecht == "Summe", wahl &gt;= 1972) |&gt; </span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">#   # mutate(altersgruppe = fct_inorder(altersgruppe)) |&gt; </span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   pivot_wider(id_cols = "wahl", names_from = "altersgruppe", values_from = "wahlbeteiligung") |&gt; gt()</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(geschlecht <span class="sc">==</span> <span class="st">"Summe"</span>, wahl <span class="sc">&gt;=</span> <span class="dv">1972</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="datenvisualisierungen" class="level2">
@@ -525,12 +519,14 @@ dbl (6): wahl, wahlberechtigte, wahlberechtige_ohne_wahlscheinvermerk, wahlb...
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>p_anim <span class="ot">&lt;-</span> p <span class="sc">+</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transition_states</span>(wahl) <span class="sc">+</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">shadow_mark</span>(<span class="at">past =</span> <span class="cn">TRUE</span>, <span class="at">future =</span> <span class="cn">FALSE</span>, </span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">alpha =</span> <span class="fl">0.2</span>, <span class="at">size =</span> size <span class="sc">/</span> <span class="dv">4</span>, <span class="at">colour =</span> <span class="st">"grey60"</span>)</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>n_wahlen <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(df_wbt_total_ab1972<span class="sc">$</span>wahl))</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">alpha =</span> <span class="fl">0.2</span>, <span class="at">size =</span> size <span class="sc">/</span> <span class="dv">4</span>, <span class="at">colour =</span> <span class="st">"grey60"</span>, </span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>              <span class="co"># Jahreszahlen nicht mitführen</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">exclude_layer =</span> <span class="dv">2</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="fu">animate</span>(p_anim, <span class="at">fps =</span> <span class="dv">10</span>, <span class="at">nframes =</span> <span class="dv">100</span>, <span class="at">end_pause =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>n_wahlen <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(df_wbt_total_ab1972<span class="sc">$</span>wahl))</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="fu">animate</span>(p_anim, <span class="at">fps =</span> <span class="dv">10</span>, <span class="at">nframes =</span> <span class="dv">100</span>, <span class="at">end_pause =</span> <span class="dv">20</span>, <span class="at">rewind =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
