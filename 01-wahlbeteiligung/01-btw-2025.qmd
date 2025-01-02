@@ -148,7 +148,7 @@ n_wahlen <- length(unique(df_wbt_total_ab1972$wahl))
 animate(p_anim, fps = 10, nframes = 100, end_pause = 20, rewind = FALSE)
 ```
 
-```{r wbt-altersgruppen-geschlecht-animation, gganimate = list(nframes = 100, fps = 12), fig.width=8, cache=TRUE}
+```{r wbt-altersgruppen-geschlecht-animation, gganimate = list(nframes = 100, fps = 12), fig.width=5, fig.height=5, fig.dpi=100, cache=TRUE}
 p <- df_wbt_total_ab1972 |> 
   filter(altersgruppe != "Summe", geschlecht != "Summe") |> 
   mutate(geschlecht_label = ifelse(geschlecht == "m", "Wähler", "Wählerinnen")) |> 
@@ -165,7 +165,7 @@ p <- df_wbt_total_ab1972 |>
     aes(x = altersgruppe, 
         y = wahlbeteiligung,
         label = geschlecht_label, color = geschlecht), 
-    hjust = 0, nudge_x = 0.1, family = "Roboto Condensed", size = 5,
+    hjust = 0, nudge_x = 0.1, family = "Roboto Condensed", size = 3,
     fontface = "bold"
   ) +
   geom_richtext(
@@ -182,9 +182,9 @@ p <- df_wbt_total_ab1972 |>
   scale_color_manual(values = c("m" = "#00C4A9", "w" = "#8A01F5")) +
   coord_cartesian(ylim = c(55, 100), clip = "off") +
   guides(color = "none") +
-  theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
+  theme_minimal(base_family = "Roboto Condensed", base_size = 8) +
   theme(
-    plot.background = element_rect(color = "#F6F6F3"),
+    plot.background = element_rect(color = "#F8F8F8"),
     plot.margin = margin(t = 2, l = 2, r = 50, b = 2)
   )
 
@@ -198,7 +198,7 @@ p_anim <- p +
 
 n_wahlen <- length(unique(df_wbt_total_ab1972$wahl))
 
-animate(p_anim, fps = 10, nframes = 100, end_pause = 20, rewind = FALSE)
+animate(p_anim, fps = 10, nframes = 100, end_pause = 12, rewind = FALSE)
 ```
 
 ### Wähler nach Altersgruppen
