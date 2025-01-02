@@ -146,318 +146,22 @@ dbl (6): wahl, wahlberechtigte, wahlberechtige_ohne_wahlscheinvermerk, wahlb...
 ℹ Use `spec()` to retrieve the full column specification for this data.
 ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 </div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>df_wbt <span class="ot">&lt;-</span> df_wbt <span class="sc">|&gt;</span> </span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">altersgruppe =</span> <span class="fu">str_replace</span>(altersgruppe, <span class="st">"</span><span class="sc">\\</span><span class="st">s-</span><span class="sc">\\</span><span class="st">s"</span>, <span class="st">"-"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="datenexploration" class="level2">
 <h2 class="anchored" data-anchor-id="datenexploration">Datenexploration</h2>
 <p>Die Altersgruppen wurden über Zeit unterschiedlich gebildet und erst ab 1972 waren 18-jährige wahlberechtigt.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>df_wbt <span class="sc">|&gt;</span> </span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(altersgruppe <span class="sc">!=</span> <span class="st">"Summe"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(wahl, altersgruppe) <span class="sc">|&gt;</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dummy =</span> <span class="st">"x"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">id_cols =</span> altersgruppe, <span class="at">names_from =</span> <span class="st">"wahl"</span>, <span class="at">values_from =</span> dummy, <span class="at">values_fill =</span> <span class="st">""</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(altersgruppe) <span class="sc">|&gt;</span> </span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<table class="caption-top table table-sm table-striped small">
-<colgroup>
-<col style="width: 13%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 5%">
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">altersgruppe</th>
-<th style="text-align: left;">1953</th>
-<th style="text-align: left;">1957</th>
-<th style="text-align: left;">1961</th>
-<th style="text-align: left;">1965</th>
-<th style="text-align: left;">1969</th>
-<th style="text-align: left;">1972</th>
-<th style="text-align: left;">1976</th>
-<th style="text-align: left;">1980</th>
-<th style="text-align: left;">1983</th>
-<th style="text-align: left;">1987</th>
-<th style="text-align: left;">1990</th>
-<th style="text-align: left;">2002</th>
-<th style="text-align: left;">2005</th>
-<th style="text-align: left;">2009</th>
-<th style="text-align: left;">2013</th>
-<th style="text-align: left;">2017</th>
-<th style="text-align: left;">2021</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">18 - 20</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">21 - 24</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">25 - 29</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">30 - 34</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">30 - 39</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">35 - 39</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">40 - 44</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">40 - 49</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">45 - 49</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">50 - 59</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">60 - 69</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">70 und mehr</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-<td style="text-align: left;">x</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<p>Als Timeline/Gantt-Chart.</p>
 <p>Für die BTWen bis einschließlich 1961 verliert man Granularität in den Altersgruppen.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>df_wbt <span class="sc">|&gt;</span> </span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(altersgruppe <span class="sc">!=</span> <span class="st">"Summe"</span>) <span class="sc">|&gt;</span> </span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(wahl, altersgruppe) <span class="sc">|&gt;</span></span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">altersgruppe_lower =</span> <span class="fu">str_extract</span>(altersgruppe, <span class="st">"(</span><span class="sc">\\</span><span class="st">d{2})</span><span class="sc">\\</span><span class="st">s"</span>, <span class="at">group =</span> <span class="dv">1</span>),</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">altersgruppe_upper =</span> <span class="fu">str_extract</span>(altersgruppe, <span class="st">"</span><span class="sc">\\</span><span class="st">d{2}</span><span class="sc">\\</span><span class="st">s.+(</span><span class="sc">\\</span><span class="st">d{2})"</span>, <span class="at">group =</span> <span class="dv">1</span>),</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">altersgruppe_upper =</span> <span class="fu">ifelse</span>(altersgruppe <span class="sc">==</span> <span class="st">"70 und mehr"</span>, <span class="dv">90</span>, altersgruppe_upper),</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">altersgruppe_lower =</span> <span class="fu">str_extract</span>(altersgruppe, <span class="st">"(</span><span class="sc">\\</span><span class="st">d{2})"</span>, <span class="at">group =</span> <span class="dv">1</span>),</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">altersgruppe_upper =</span> <span class="fu">str_extract</span>(altersgruppe, <span class="st">"</span><span class="sc">\\</span><span class="st">d{2}.(</span><span class="sc">\\</span><span class="st">d{2})"</span>, <span class="at">group =</span> <span class="dv">1</span>),</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">altersgruppe_upper =</span> <span class="fu">ifelse</span>(altersgruppe <span class="sc">==</span> <span class="st">"70 und mehr"</span>, <span class="dv">80</span>, altersgruppe_upper),</span>
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(<span class="fu">c</span>(altersgruppe_lower, altersgruppe_upper), as.integer),</span>
 <span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">wahl =</span> <span class="fu">factor</span>(wahl)</span>
 <span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
@@ -483,54 +187,206 @@ dbl (6): wahl, wahlberechtigte, wahlberechtige_ohne_wahlscheinvermerk, wahlb...
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>df_wbt_total_ab1972 <span class="ot">&lt;-</span> df_wbt <span class="sc">|&gt;</span>  </span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(wahl, altersgruppe) <span class="sc">|&gt;</span> </span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(geschlecht <span class="sc">==</span> <span class="st">"Summe"</span>, wahl <span class="sc">&gt;=</span> <span class="dv">1972</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># filter(geschlecht == "Summe", wahl &gt;= 1972)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(wahl <span class="sc">&gt;=</span> <span class="dv">1972</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="datenvisualisierungen" class="level2">
 <h2 class="anchored" data-anchor-id="datenvisualisierungen">Datenvisualisierungen</h2>
 <section id="wahlbeteiligung-nach-altersgruppen-über-zeit" class="level3">
 <h3 class="anchored" data-anchor-id="wahlbeteiligung-nach-altersgruppen-über-zeit">Wahlbeteiligung nach Altersgruppen über Zeit</h3>
-<p>Animation</p>
-<div class="cell" data-gganimate="{&quot;nframes&quot;:100,&quot;fps&quot;:12}">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> df_wbt_total_ab1972 <span class="sc">|&gt;</span> </span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(altersgruppe <span class="sc">!=</span> <span class="st">"Summe"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># mutate(wahl = factor(wahl)) |&gt; </span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(altersgruppe, wahlbeteiligung, <span class="at">group =</span> wahl)) <span class="sc">+</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"purple"</span>, <span class="at">size =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> <span class="sc">~</span><span class="fu">subset</span>(., altersgruppe <span class="sc">==</span> <span class="fu">max</span>(altersgruppe)),</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">x =</span> altersgruppe, </span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> wahlbeteiligung,</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">label =</span> wahl), </span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"purple"</span>, <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">nudge_x =</span> <span class="fl">0.1</span>, <span class="at">family =</span> <span class="st">"Roboto Condensed"</span>, <span class="at">size =</span> <span class="dv">5</span>,</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">fontface =</span> <span class="st">"bold"</span></span>
+<p>Wahl 2021</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>df_wbt_total_ab1972 <span class="sc">|&gt;</span> </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(altersgruppe <span class="sc">!=</span> <span class="st">"Summe"</span>, geschlecht <span class="sc">!=</span> <span class="st">"Summe"</span>, wahl <span class="sc">==</span> <span class="dv">2021</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(wahl, geschlecht, altersgruppe, wahlbeteiligung) <span class="sc">|&gt;</span> </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">id_cols =</span> <span class="fu">c</span>(wahl, altersgruppe), <span class="at">names_from =</span> <span class="st">"geschlecht"</span>, <span class="at">values_from =</span> <span class="st">"wahlbeteiligung"</span>, <span class="at">names_prefix =</span> <span class="st">"wbt_"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> altersgruppe)) <span class="sc">+</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">xend =</span> altersgruppe,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> wbt_m, <span class="at">yend =</span> wbt_w), </span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"grey50"</span>, <span class="at">linewidth =</span> <span class="fl">0.9</span>) <span class="sc">+</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">y =</span> wbt_m, <span class="at">fill =</span> <span class="st">"männlich"</span>),</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="dv">3</span>, <span class="at">shape =</span> <span class="dv">21</span>, <span class="at">color =</span> <span class="st">"grey50"</span>, <span class="at">stroke =</span> <span class="fl">0.1</span></span>
 <span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">position =</span> <span class="st">"top"</span>, <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">add =</span> <span class="fu">c</span>(<span class="fl">0.3</span>, <span class="fl">0.8</span>))) <span class="sc">+</span></span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="cf">function</span>(x) <span class="fu">paste</span>(x, <span class="st">"%"</span>)) <span class="sc">+</span></span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">clip =</span> <span class="st">"off"</span>) <span class="sc">+</span></span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_family =</span> <span class="st">"Roboto Condensed"</span>, <span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">color =</span> <span class="st">"#F6F6F3"</span>)</span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
-ℹ Please use `linewidth` instead.</code></pre>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">y =</span> wbt_w, <span class="at">fill =</span> <span class="st">"weiblich"</span>),</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="dv">3</span>, <span class="at">shape =</span> <span class="dv">21</span>, <span class="at">color =</span> <span class="st">"grey50"</span>, <span class="at">stroke =</span> <span class="fl">0.1</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">position =</span> <span class="st">"top"</span>, <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">add =</span> <span class="fu">c</span>(<span class="fl">0.3</span>, <span class="fl">0.8</span>))) <span class="sc">+</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="cf">function</span>(x) <span class="fu">paste</span>(x, <span class="st">"%"</span>)) <span class="sc">+</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"männlich"</span> <span class="ot">=</span> <span class="st">"#00C4A9"</span>, <span class="st">"weiblich"</span> <span class="ot">=</span> <span class="st">"#8A01F5"</span>)) <span class="sc">+</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">clip =</span> <span class="st">"off"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">65</span>, <span class="dv">85</span>)) <span class="sc">+</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"Geschlecht"</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_family =</span> <span class="st">"Roboto Condensed"</span>, <span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">color =</span> <span class="st">"#F6F6F3"</span>)</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="01-btw-2025_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
 </div>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>p_anim <span class="ot">&lt;-</span> p <span class="sc">+</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transition_states</span>(wahl) <span class="sc">+</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">shadow_mark</span>(<span class="at">past =</span> <span class="cn">TRUE</span>, <span class="at">future =</span> <span class="cn">FALSE</span>, </span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">alpha =</span> <span class="fl">0.2</span>, <span class="at">size =</span> size <span class="sc">/</span> <span class="dv">4</span>, <span class="at">colour =</span> <span class="st">"grey60"</span>, </span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>              <span class="co"># Jahreszahlen nicht mitführen</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">exclude_layer =</span> <span class="dv">2</span>)</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>n_wahlen <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(df_wbt_total_ab1972<span class="sc">$</span>wahl))</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="fu">animate</span>(p_anim, <span class="at">fps =</span> <span class="dv">10</span>, <span class="at">nframes =</span> <span class="dv">100</span>, <span class="at">end_pause =</span> <span class="dv">20</span>, <span class="at">rewind =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div class="cell" data-gganimate="{&quot;nframes&quot;:100,&quot;fps&quot;:12}">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> df_wbt_total_ab1972 <span class="sc">|&gt;</span> </span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(altersgruppe <span class="sc">!=</span> <span class="st">"Summe"</span>, geschlecht <span class="sc">==</span> <span class="st">"Summe"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># mutate(wahl = factor(wahl)) |&gt; </span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(altersgruppe, wahlbeteiligung, <span class="at">group =</span> wahl)) <span class="sc">+</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"purple"</span>, <span class="at">linewidth =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">shape =</span> <span class="dv">21</span>, <span class="at">fill =</span> <span class="st">"white"</span>, <span class="at">color =</span> <span class="st">"purple"</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> <span class="sc">~</span><span class="fu">subset</span>(., altersgruppe <span class="sc">==</span> <span class="fu">max</span>(altersgruppe)),</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">x =</span> altersgruppe, </span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> wahlbeteiligung,</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">label =</span> wahl), </span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"purple"</span>, <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">nudge_x =</span> <span class="fl">0.1</span>, <span class="at">family =</span> <span class="st">"Roboto Condensed"</span>, <span class="at">size =</span> <span class="dv">5</span>,</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">fontface =</span> <span class="st">"bold"</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">position =</span> <span class="st">"top"</span>, <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">add =</span> <span class="fu">c</span>(<span class="fl">0.3</span>, <span class="fl">0.8</span>))) <span class="sc">+</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="cf">function</span>(x) <span class="fu">paste</span>(x, <span class="st">"%"</span>)) <span class="sc">+</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">clip =</span> <span class="st">"off"</span>) <span class="sc">+</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_family =</span> <span class="st">"Roboto Condensed"</span>, <span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">color =</span> <span class="st">"#F6F6F3"</span>)</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>p_anim <span class="ot">&lt;-</span> p <span class="sc">+</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transition_states</span>(wahl) <span class="sc">+</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">shadow_mark</span>(<span class="at">past =</span> <span class="cn">TRUE</span>, <span class="at">future =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>              <span class="at">alpha =</span> <span class="fl">0.2</span>, <span class="at">linewidth =</span> <span class="fl">0.33</span>, <span class="at">colour =</span> <span class="st">"grey60"</span>, </span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>              <span class="co"># Jahreszahlen nicht mitführen</span></span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>              <span class="at">exclude_layer =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>))</span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>n_wahlen <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(df_wbt_total_ab1972<span class="sc">$</span>wahl))</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a><span class="fu">animate</span>(p_anim, <span class="at">fps =</span> <span class="dv">10</span>, <span class="at">nframes =</span> <span class="dv">100</span>, <span class="at">end_pause =</span> <span class="dv">20</span>, <span class="at">rewind =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
 <p><img src="01-btw-2025_files/figure-html/wbt-altersgruppen-animation-1.gif" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-gganimate="{&quot;nframes&quot;:100,&quot;fps&quot;:12}">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> df_wbt_total_ab1972 <span class="sc">|&gt;</span> </span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(altersgruppe <span class="sc">!=</span> <span class="st">"Summe"</span>, geschlecht <span class="sc">!=</span> <span class="st">"Summe"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">geschlecht_label =</span> <span class="fu">ifelse</span>(geschlecht <span class="sc">==</span> <span class="st">"m"</span>, <span class="st">"Wähler"</span>, <span class="st">"Wählerinnen"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(altersgruppe, wahlbeteiligung, <span class="at">group =</span> <span class="fu">paste</span>(wahl, geschlecht))) <span class="sc">+</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">color =</span> geschlecht),</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">linewidth =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">color =</span> geschlecht),</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">shape =</span> <span class="dv">21</span>, <span class="at">fill =</span> <span class="st">"white"</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> <span class="sc">~</span><span class="fu">subset</span>(., altersgruppe <span class="sc">==</span> <span class="fu">max</span>(altersgruppe)),</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">x =</span> altersgruppe, </span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> wahlbeteiligung,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">label =</span> geschlecht_label, <span class="at">color =</span> geschlecht), </span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">nudge_x =</span> <span class="fl">0.1</span>, <span class="at">family =</span> <span class="st">"Roboto Condensed"</span>, <span class="at">size =</span> <span class="dv">5</span>,</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">fontface =</span> <span class="st">"bold"</span></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_richtext</span>(</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> <span class="sc">~</span><span class="fu">subset</span>(., altersgruppe <span class="sc">==</span> <span class="fu">max</span>(altersgruppe)) <span class="sc">|&gt;</span> </span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">distinct</span>(altersgruppe, wahl),</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">x =</span> altersgruppe, <span class="at">y =</span> <span class="dv">60</span>, </span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>        <span class="at">label =</span> <span class="fu">sprintf</span>(<span class="st">"&lt;span style='font-size: 12pt'&gt;Bundestagswahl&lt;/span&gt;&lt;br&gt;&lt;b&gt;%s&lt;/b&gt;"</span>, wahl)),</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"grey50"</span>, <span class="at">size =</span> <span class="dv">12</span>, <span class="at">hjust =</span> <span class="dv">1</span>, <span class="at">family =</span> <span class="st">"Roboto Condensed"</span>,</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">label.size =</span> <span class="dv">0</span>, <span class="at">lineheight =</span> <span class="fl">0.2</span>,</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">inherit.aes =</span> <span class="cn">FALSE</span></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">position =</span> <span class="st">"top"</span>, <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">add =</span> <span class="fu">c</span>(<span class="fl">0.3</span>, <span class="fl">0.8</span>))) <span class="sc">+</span></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="cf">function</span>(x) <span class="fu">paste</span>(x, <span class="st">"%"</span>)) <span class="sc">+</span></span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"m"</span> <span class="ot">=</span> <span class="st">"#00C4A9"</span>, <span class="st">"w"</span> <span class="ot">=</span> <span class="st">"#8A01F5"</span>)) <span class="sc">+</span></span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">55</span>, <span class="dv">100</span>), <span class="at">clip =</span> <span class="st">"off"</span>) <span class="sc">+</span></span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">color =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_family =</span> <span class="st">"Roboto Condensed"</span>, <span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">color =</span> <span class="st">"#F6F6F3"</span>),</span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.margin =</span> <span class="fu">margin</span>(<span class="at">t =</span> <span class="dv">2</span>, <span class="at">l =</span> <span class="dv">2</span>, <span class="at">r =</span> <span class="dv">50</span>, <span class="at">b =</span> <span class="dv">2</span>)</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>p_anim <span class="ot">&lt;-</span> p <span class="sc">+</span></span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transition_states</span>(wahl) <span class="sc">+</span></span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">shadow_mark</span>(<span class="at">past =</span> <span class="cn">TRUE</span>, <span class="at">future =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>              <span class="at">alpha =</span> <span class="fl">0.2</span>, <span class="at">linewidth =</span> <span class="fl">0.33</span>, </span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>              <span class="co"># Jahreszahlen nicht mitführen</span></span>
+<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>              <span class="at">exclude_layer =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>))</span>
+<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>n_wahlen <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(df_wbt_total_ab1972<span class="sc">$</span>wahl))</span>
+<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a><span class="fu">animate</span>(p_anim, <span class="at">fps =</span> <span class="dv">10</span>, <span class="at">nframes =</span> <span class="dv">100</span>, <span class="at">end_pause =</span> <span class="dv">20</span>, <span class="at">rewind =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="01-btw-2025_files/figure-html/wbt-altersgruppen-geschlecht-animation-1.gif" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="wähler-nach-altersgruppen" class="level3">
+<h3 class="anchored" data-anchor-id="wähler-nach-altersgruppen">Wähler nach Altersgruppen</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>p_wbt_altersgruppen <span class="ot">&lt;-</span> df_wbt_total_ab1972 <span class="sc">|&gt;</span> </span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(altersgruppe <span class="sc">!=</span> <span class="st">"Summe"</span>, geschlecht <span class="sc">==</span> <span class="st">"Summe"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="fu">factor</span>(wahl), waehler, <span class="at">fill =</span> altersgruppe)) <span class="sc">+</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">position =</span> <span class="st">"fill"</span>, <span class="at">col =</span> <span class="st">"white"</span>, <span class="at">linewidth =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.1</span>),</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_percent</span>(),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">sec.axis =</span> <span class="fu">dup_axis</span>()</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">type =</span> <span class="st">"qual"</span>, <span class="at">palette =</span> <span class="st">"Set3"</span>) <span class="sc">+</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_family =</span> <span class="st">"Roboto Condensed"</span>, <span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">color =</span> <span class="st">"#F6F6F3"</span>)</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>p_wbt_altersgruppen</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="01-btw-2025_files/figure-html/waehler-nach-altersgruppen-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>df_wbt_total_ab1972 <span class="sc">|&gt;</span> </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(altersgruppe <span class="sc">!=</span> <span class="st">"Summe"</span>, geschlecht <span class="sc">==</span> <span class="st">"Summe"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(wahl, altersgruppe, wahlberechtigte, waehler) <span class="sc">|&gt;</span> </span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(wahlberechtigte, waehler), <span class="at">names_to =</span> <span class="st">"gruppe"</span>, <span class="at">values_to =</span> <span class="st">"anzahl"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(gruppe, anzahl, <span class="at">fill =</span> altersgruppe)) <span class="sc">+</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">position =</span> <span class="st">"fill"</span>, <span class="at">col =</span> <span class="st">"white"</span>, <span class="at">linewidth =</span> <span class="fl">0.1</span>) <span class="sc">+</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.1</span>),</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_percent</span>(),</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">sec.axis =</span> <span class="fu">dup_axis</span>()</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">type =</span> <span class="st">"qual"</span>, <span class="at">palette =</span> <span class="st">"Set3"</span>) <span class="sc">+</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="fu">vars</span>(wahl), <span class="at">ncol =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_family =</span> <span class="st">"Roboto Condensed"</span>, <span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">color =</span> <span class="st">"#F6F6F3"</span>)</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="01-btw-2025_files/figure-html/waehler-wahlberechtigte-nach-altersgruppen-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -541,6 +397,275 @@ dbl (6): wahl, wahlberechtigte, wahlberechtige_ohne_wahlscheinvermerk, wahlb...
 <p>Marimekko-Chart, das die Größe der Altersgruppen auf der x-Achse abbildet, y–Achse Wahlbeteiligung. Fläche der Rechtecke ergibt die Anzahl der Wähler in der jeweiligen Altersgruppe.</p>
 <p>Ggf. animiert über Zeit oder 2-3 Charts, um die Veränderungen der Zusammensetzung der Wählerschaft darzustellen.</p>
 <p>Ggf. nur Anteil der Wähler nach Altersgruppe? Weniger Komplexität als das Marimekko-Chart.</p>
+</section>
+</section>
+<section id="briefwahl" class="level2">
+<h2 class="anchored" data-anchor-id="briefwahl">Briefwahl</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>url_modus <span class="ot">&lt;-</span> </span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="st">"https://www.bundeswahlleiterin.de/dam/jcr/589a0053-b05a-4847-b616-5cdbbc48b277/btw21_rws_bst2-ba.csv"</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>df_modus <span class="ot">&lt;-</span> <span class="fu">read_csv2</span>(url_modus, <span class="at">skip =</span> <span class="dv">12</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>ℹ Using "','" as decimal and "'.'" as grouping mark. Use `read_delim()` for more control.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 126 Columns: 17
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ";"
+chr  (4): Land, Bezirksart, Geschlecht, Geburtsjahresgruppe
+dbl (13): Erst-/Zweitstimme, Summe, Ungültig, CDU, SPD, AfD, FDP, DIE LINKE,...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+</div>
+</section>
+<section id="wahlbeteiligung-nach-bundesländern-insgesamt" class="level2">
+<h2 class="anchored" data-anchor-id="wahlbeteiligung-nach-bundesländern-insgesamt">Wahlbeteiligung nach Bundesländern insgesamt</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>spaltennamen <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Land"</span>,</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jahr der Wahl"</span>,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Wahlberechtigte insgesamt"</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Wahlberechtigte ohne Sperrvermerk"</span>,</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Wahlberechtigte mit Sperrvermerk und nach § 25 Abs. 2 BWO"</span>,</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Anteil Wahlberechtigte mit Sperrvermerk und nach § 25 Abs. 2 BWO an Wahlberechtigten insgesamt"</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Wählende insgesamt"</span>,</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Wählende ohne Wahlschein"</span>,</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Anteil Wählende ohne Wahlschein an den Wählenden insgesamt"</span>,</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Wählende mit einfachen Wahlschein"</span>,</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Wählende mit Briefwahlschein"</span>,</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Anteil Wählende mit Briefwahlschein an den Wählenden insgesamt"</span>,</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Wahlbeteiligung insgesamt: Anteil Wählende insgesamt an Wahlberechtigten insgesamt"</span>,</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Wahlbeteiligung ohne Wahlschein: Anteil Wählende ohne Wahlschein an Wahlberechtigten ohne Sperrvermerk"</span>,</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Wahlbeteiligung mit Wahlschein: Anteil Wählende mit Wahlschein an Wahlberechtigten mit Sperrvermerk"</span>)</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>spaltennamen[<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">13</span>)] <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"land"</span>, <span class="st">"jahr"</span>, <span class="st">"wbt_insgesamt"</span>)</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>df_wbt_laender <span class="ot">&lt;-</span> <span class="fu">read_csv2</span>(<span class="st">"https://www.bundeswahlleiterin.de/dam/jcr/21e4d643-194f-4317-b31e-70846d095ec0/btw_ab57_wahlschein.csv"</span>,</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>                            <span class="at">skip =</span> <span class="dv">6</span>, <span class="at">col_names =</span> spaltennamen)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>ℹ Using "','" as decimal and "'.'" as grouping mark. Use `read_delim()` for more control.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 273 Columns: 16
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ";"
+chr (2): land, jahr
+dbl (6): Anteil Wahlberechtigte mit Sperrvermerk und nach § 25 Abs. 2 BWO an...
+num (7): Wahlberechtigte insgesamt, Wahlberechtigte ohne Sperrvermerk, Wahlb...
+lgl (1): X16
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>df_wbt_laender <span class="ot">&lt;-</span> df_wbt_laender <span class="sc">|&gt;</span> </span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(land, jahr, wbt_insgesamt) <span class="sc">|&gt;</span> </span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">jahr =</span> <span class="fu">as.integer</span>(jahr)) <span class="sc">|&gt;</span> </span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.omit</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: There was 1 warning in `mutate()`.
+ℹ In argument: `jahr = as.integer(jahr)`.
+Caused by warning:
+! NAs introduced by coercion</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>btw_jahre <span class="ot">&lt;-</span> <span class="fu">unique</span>(df_wbt_laender<span class="sc">$</span>jahr)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>df_wbt_laender <span class="sc">|&gt;</span>  </span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(land <span class="sc">!=</span> <span class="st">"Bund"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(jahr, wbt_insgesamt, <span class="at">group =</span> land)) <span class="sc">+</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">0.2</span>, <span class="at">color =</span> <span class="st">"grey40"</span>) <span class="sc">+</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> <span class="sc">~</span><span class="fu">mutate</span>(., <span class="at">land2 =</span> land),</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"red"</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> btw_jahre[<span class="fu">seq</span>(<span class="dv">1</span>, <span class="fu">length</span>(btw_jahre), <span class="dv">2</span>)]) <span class="sc">+</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">50</span>, <span class="dv">100</span>)) <span class="sc">+</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="fu">vars</span>(land2))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="01-btw-2025_files/figure-html/wbt-länder-daten-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="strukturdaten-der-wahlkreise-2021" class="level2">
+<h2 class="anchored" data-anchor-id="strukturdaten-der-wahlkreise-2021">Strukturdaten der Wahlkreise 2021</h2>
+<p><a href="https://www.bundeswahlleiterin.de/dam/jcr/b1d3fc4f-17eb-455f-a01c-a0bf32135c5d/btw21_strukturdaten.csv" class="uri">https://www.bundeswahlleiterin.de/dam/jcr/b1d3fc4f-17eb-455f-a01c-a0bf32135c5d/btw21_strukturdaten.csv</a></p>
+<p>Wahlergebnisse in den Wahlkreisen 2021</p>
+<p><a href="https://www.bundeswahlleiterin.de/bundestagswahlen/2021/ergebnisse/opendata/btw21/20240211_wdhwahl-vgl2021/csv/kerg.csv" class="uri">https://www.bundeswahlleiterin.de/bundestagswahlen/2021/ergebnisse/opendata/btw21/20240211_wdhwahl-vgl2021/csv/kerg.csv</a></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>url_wk_struktur_2021 <span class="ot">&lt;-</span> <span class="st">"https://www.bundeswahlleiterin.de/dam/jcr/b1d3fc4f-17eb-455f-a01c-a0bf32135c5d/btw21_strukturdaten.csv"</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>url_wk_ergebnisse_2021 <span class="ot">&lt;-</span> <span class="st">"https://www.bundeswahlleiterin.de/bundestagswahlen/2021/ergebnisse/opendata/btw21/20240211_wdhwahl-vgl2021/csv/kerg.csv"</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>df_wk_struktur_2021 <span class="ot">&lt;-</span> <span class="fu">read_csv2</span>(url_wk_struktur_2021, <span class="at">skip =</span> <span class="dv">8</span>,</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">name_repair =</span> janitor<span class="sc">::</span>make_clean_names)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>ℹ Using "','" as decimal and "'.'" as grouping mark. Use `read_delim()` for more control.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 316 Columns: 52
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ";"
+chr  (4): land, wahlkreis_nr, wahlkreis_name, fussnoten
+dbl (47): gemeinden_am_31_12_2019_anzahl, bevolkerung_am_31_12_2019_insgesam...
+num  (1): flache_am_31_12_2019_km2
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>df_wk_ergebnisse_2021 <span class="ot">&lt;-</span> <span class="fu">read_csv2</span>(url_wk_ergebnisse_2021, <span class="at">skip =</span> <span class="dv">4</span>,</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">name_repair =</span> janitor<span class="sc">::</span>make_clean_names) <span class="sc">|&gt;</span> </span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>ℹ Using "','" as decimal and "'.'" as grouping mark. Use `read_delim()` for more control.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
+e.g.:
+  dat &lt;- vroom(...)
+  problems(dat)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 332 Columns: 212
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ";"
+chr   (3): x, x_2, x_3
+dbl (187): endgultig, vorperiode, endgultig_2, vorperiode_2, endgultig_3, vo...
+lgl  (22): endgultig_61, vorperiode_61, endgultig_77, vorperiode_77, endgult...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(df_wk_ergebnisse_2021) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"wahlkreis_nr"</span>, <span class="st">"wahlkreis_name"</span>, <span class="st">"landnr"</span>, <span class="st">"wahlberechtigte"</span>, <span class="st">"waehlende"</span>)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>df_wk_ergebnisse_2021 <span class="ot">&lt;-</span> df_wk_ergebnisse_2021 <span class="sc">|&gt;</span> </span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">wbt =</span> waehlende <span class="sc">/</span> wahlberechtigte)</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>df_wk_ergebnisse_struktur_2021 <span class="ot">&lt;-</span> df_wk_ergebnisse_2021 <span class="sc">|&gt;</span> </span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(df_wk_struktur_2021, <span class="at">by =</span> <span class="fu">join_by</span>(wahlkreis_nr, wahlkreis_name))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="korrelationen-zwischen-wahlbeteiligung-und-strukturmerkmalen-der-wahlkreise" class="level3">
+<h3 class="anchored" data-anchor-id="korrelationen-zwischen-wahlbeteiligung-und-strukturmerkmalen-der-wahlkreise">Korrelationen zwischen Wahlbeteiligung und Strukturmerkmalen der Wahlkreise</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>var <span class="ot">&lt;-</span> <span class="st">"verfugbares_einkommen_der_privaten_haushalte_2018_eur_je_ew"</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>numeric_cols <span class="ot">&lt;-</span> <span class="fu">colnames</span>(<span class="fu">select</span>(df_wk_ergebnisse_struktur_2021, <span class="fu">where</span>(is.numeric)))</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>wbt_cors <span class="ot">&lt;-</span> <span class="fu">map</span>(</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  numeric_cols,</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(x) {</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cor</span>(df_wk_ergebnisse_struktur_2021<span class="sc">$</span>wbt, df_wk_ergebnisse_struktur_2021[x])  </span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> <span class="fu">unlist</span>()</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">var =</span> numeric_cols, </span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">var_short =</span> <span class="fu">str_sub</span>(numeric_cols, <span class="dv">1</span>, <span class="dv">60</span>),</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">r =</span> wbt_cors</span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(var_short, r) <span class="sc">|&gt;</span> </span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(<span class="fu">abs</span>(r)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                                      var_short           r
+1                                                           wbt  1.00000000
+2                arbeitslosenquote_februar_2021_15_bis_24_jahre -0.71605375
+3                      arbeitslosenquote_februar_2021_insgesamt -0.64104597
+4                         arbeitslosenquote_februar_2021_manner -0.63899681
+5                         arbeitslosenquote_februar_2021_frauen -0.63450093
+6  empfanger_innen_von_leistungen_nach_sgb_ii_oktober_2020_insg -0.58928295
+7   verfugbares_einkommen_der_privaten_haushalte_2018_eur_je_ew  0.57396562
+8  schulabganger_innen_allgemeinbildender_schulen_2019_ohne_hau -0.57372701
+9                arbeitslosenquote_februar_2021_55_bis_64_jahre -0.57210176
+10                                                    waehlende  0.55659254
+11      bestand_an_wohnungen_am_31_12_2019_insgesamt_je_1000_ew -0.45252610
+12                          wohnflache_am_31_12_2019_je_wohnung  0.38164241
+13           pkw_bestand_am_01_01_2020_pkw_insgesamt_je_1000_ew  0.37121524
+14 empfanger_innen_von_leistungen_nach_sgb_ii_oktober_2020_ausl  0.33397855
+15   unternehmensregister_2018_unternehmen_insgesamt_je_1000_ew  0.32898867
+16 zu_bzw_abnahme_der_bevolkerung_2019_geburtensaldo_je_1000_ew  0.31353562
+17                    fertiggestellte_wohnungen_2019_je_1000_ew  0.30322044
+18 sozialversicherungspflichtig_beschaftigte_am_30_06_2020_ubri -0.28674723
+19             alter_von_bis_jahren_am_31_12_2019_18_24_percent  0.27391161
+20 kindertagesbetreuung_am_01_03_2020_betreute_kinder_3_bis_unt  0.26334376
+21       alter_von_bis_jahren_am_31_12_2019_75_und_mehr_percent -0.26256006
+22 bodenflache_nach_art_der_tatsachlichen_nutzung_am_31_12_2019  0.25990998
+23 bodenflache_nach_art_der_tatsachlichen_nutzung_am_31_12_2019 -0.25990998
+24          alter_von_bis_jahren_am_31_12_2019_unter_18_percent  0.25536594
+25 kindertagesbetreuung_am_01_03_2020_betreute_kinder_unter_3_j -0.24669638
+26 schulabganger_innen_allgemeinbildender_schulen_2019_insgesam  0.23748425
+27    unternehmensregister_2018_handwerksunternehmen_je_1000_ew  0.23666158
+28             alter_von_bis_jahren_am_31_12_2019_60_74_percent -0.23062162
+29 empfanger_innen_von_leistungen_nach_sgb_ii_oktober_2020_nich  0.22616815
+30                   bevolkerungsdichte_am_31_12_2019_ew_je_km2 -0.22232634
+31                                              wahlberechtigte  0.21026314
+32                   bevolkerung_am_31_12_2019_deutsche_in_1000  0.20899553
+33             alter_von_bis_jahren_am_31_12_2019_35_59_percent  0.20037059
+34 schulabganger_innen_allgemeinbildender_schulen_2019_mit_haup  0.19691292
+35                          bruttoinlandsprodukt_2018_eur_je_ew  0.19444654
+36                               wohnflache_am_31_12_2019_je_ew  0.18569812
+37 sozialversicherungspflichtig_beschaftigte_am_30_06_2020_prod  0.17025251
+38 sozialversicherungspflichtig_beschaftigte_am_30_06_2020_land -0.14034332
+39                  bevolkerung_am_31_12_2019_insgesamt_in_1000  0.13649111
+40 pkw_bestand_am_01_01_2020_pkw_mit_elektro_oder_hybrid_antrie  0.11811956
+41 zu_bzw_abnahme_der_bevolkerung_2019_wanderungssaldo_je_1000_  0.08805995
+42 sozialversicherungspflichtig_beschaftigte_am_30_06_2020_insg  0.08762620
+43                                     flache_am_31_12_2019_km2 -0.08435611
+44                               gemeinden_am_31_12_2019_anzahl  0.07834218
+45 schulabganger_innen_allgemeinbildender_schulen_2019_mit_mitt  0.06925798
+46                 schulabganger_innen_beruflicher_schulen_2019  0.06679361
+47            bevolkerung_am_31_12_2019_auslander_innen_percent -0.05202397
+48             alter_von_bis_jahren_am_31_12_2019_25_34_percent  0.02986940
+49 sozialversicherungspflichtig_beschaftigte_am_30_06_2020_hand  0.02106453
+50 schulabganger_innen_allgemeinblldender_schulen_2019_mit_allg -0.01322923
+51 sozialversicherungspflichtig_beschaftigte_am_30_06_2020_offe -0.01274772</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>df_wk_ergebnisse_struktur_2021 <span class="sc">|&gt;</span> </span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(arbeitslosenquote_februar_2021_insgesamt, wbt, <span class="at">group =</span> wahlkreis_nr)) <span class="sc">+</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">group =</span> <span class="dv">1</span>),</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">color =</span> <span class="st">"grey10"</span>) <span class="sc">+</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">shape =</span> <span class="dv">21</span>, <span class="at">color =</span> <span class="st">"purple"</span>, <span class="at">fill =</span> <span class="fu">alpha</span>(<span class="st">"purple"</span>, <span class="fl">0.3</span>), <span class="at">stroke =</span> <span class="fl">0.2</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_percent</span>()) <span class="sc">+</span></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="01-btw-2025_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>df_wk_ergebnisse_struktur_2021 <span class="sc">|&gt;</span> </span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(verfugbares_einkommen_der_privaten_haushalte_2018_eur_je_ew, wbt, <span class="at">group =</span> wahlkreis_nr)) <span class="sc">+</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">group =</span> <span class="dv">1</span>),</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">color =</span> <span class="st">"grey10"</span>) <span class="sc">+</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">shape =</span> <span class="dv">21</span>, <span class="at">color =</span> <span class="st">"purple"</span>, <span class="at">fill =</span> <span class="fu">alpha</span>(<span class="st">"purple"</span>, <span class="fl">0.3</span>), <span class="at">stroke =</span> <span class="fl">0.2</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_percent</span>()) <span class="sc">+</span></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="01-btw-2025_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 </section>
 </section>
 
