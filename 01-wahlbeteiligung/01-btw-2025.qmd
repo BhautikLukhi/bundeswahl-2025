@@ -148,7 +148,7 @@ n_wahlen <- length(unique(df_wbt_total_ab1972$wahl))
 animate(p_anim, fps = 10, nframes = 100, end_pause = 20, rewind = FALSE)
 ```
 
-```{r wbt-altersgruppen-geschlecht-animation, gganimate = list(nframes = 100, fps = 12), fig.width=5, fig.height=5, fig.dpi=100, cache=TRUE}
+```{r wbt-altersgruppen-geschlecht-animation, gganimate = list(nframes = 100, fps = 12), fig.width=5, fig.height=5, fig.dpi=150, cache=TRUE}
 p <- df_wbt_total_ab1972 |> 
   filter(altersgruppe != "Summe", geschlecht != "Summe") |> 
   mutate(geschlecht_label = ifelse(geschlecht == "m", "Wähler", "Wählerinnen")) |> 
