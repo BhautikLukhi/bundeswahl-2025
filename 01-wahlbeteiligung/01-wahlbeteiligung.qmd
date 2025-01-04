@@ -1,5 +1,10 @@
 ---
 title: "01 Wahlbeteiligung"
+format:
+  html:
+    code-fold: true
+    message: false
+    warning: false
 ---
 
 ## Datenquelle
@@ -38,8 +43,6 @@ df_wbt <- df_wbt |>
   mutate(altersgruppe = str_replace(altersgruppe, "\\s-\\s", "-"))
 ```
 
-## Datenexploration
-
 Die Altersgruppen wurden über Zeit unterschiedlich gebildet und erst ab 1972 waren 18-jährige wahlberechtigt.
 
 Für die BTWen bis einschließlich 1961 verliert man Granularität in den Altersgruppen.
@@ -70,9 +73,7 @@ df_wbt |>
 Betrachtung der Bundestagswahlen ab 1972, weil der Zuschnitt der Altersgruppen seit der Herabsetzung der Volljährigkeitsgrenze auf 18 Jahre konstant ist.
 
 ```{r}
-df_wbt_total_ab1972 <- df_wbt |>  
-  group_by(wahl, altersgruppe) |> 
-  # filter(geschlecht == "Summe", wahl >= 1972)
+df_wbt_total_ab1972 <- df_wbt |>
   filter(wahl >= 1972)
 ```
 
@@ -80,9 +81,9 @@ df_wbt_total_ab1972 <- df_wbt |>
 
 ### Wahlbeteiligung nach Altersgruppen über Zeit
 
-Wahl 2021
+#### Wahl 2021
 
-```{r}
+```{r wbt-altersgruppen-geschlecht-dumbbell-plot-1}
 
 df_wbt_total_ab1972 |> 
   filter(altersgruppe != "Summe", geschlecht != "Summe", wahl == 2021) |> 
@@ -95,22 +96,61 @@ df_wbt_total_ab1972 |>
     color = "grey50", linewidth = 0.9) +
   geom_point(
     aes(y = wbt_m, fill = "männlich"),
-    size = 3, shape = 21, color = "grey50", stroke = 0.1
+    size = 4, shape = 21, color = "white", stroke = 0.2
   ) +
   geom_point(
     aes(y = wbt_w, fill = "weiblich"),
-    size = 3, shape = 21, color = "grey50", stroke = 0.1
+    size = 4, shape = 21, color = "white", stroke = 0.2
   ) +
   scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.8))) +
   scale_y_continuous(labels = function(x) paste(x, "%")) +
   scale_fill_manual(values = c("männlich" = "#00C4A9", "weiblich" = "#8A01F5")) +
   coord_cartesian(
-    clip = "off", ylim = c(65, 85)) +
+    clip = "off", ylim = c(50, 100)) +
   labs(
+    subtitle = "Wahlbeteiligung nach Altersgruppe und Geschlecht",
+    x = "Altersgruppe",
+    y = "Wahlbeteiligung (in %)",
     fill = "Geschlecht"
   )
 
 ```
+
+Hier noch mal wie angekündigt eine Version, in der die Größe der Kreise proportional zu der Anzahl der Wählenden ist.
+
+```{r wbt-altersgruppen-geschlecht-dumbbell-plot-2}
+df_wbt_total_ab1972 |> 
+  filter(altersgruppe != "Summe", geschlecht != "Summe", wahl == 2021) |> 
+  select(wahl, geschlecht, altersgruppe, wahlbeteiligung, waehler) |> 
+  pivot_wider(id_cols = c(wahl, altersgruppe), names_from = "geschlecht", values_from = c("wahlbeteiligung", "waehler")) |>
+  ggplot(aes(x = altersgruppe)) +
+  geom_segment(
+    aes(xend = altersgruppe,
+        y = wahlbeteiligung_m, yend = wahlbeteiligung_w), 
+    color = "grey50", linewidth = 0.9) +
+  geom_point(
+    aes(y = wahlbeteiligung_m, fill = "männlich", size = waehler_m),
+    shape = 21, color = "white", stroke = 0.2
+  ) +
+  geom_point(
+    aes(y = wahlbeteiligung_w, fill = "weiblich", size = waehler_w),
+    shape = 21, color = "white", stroke = 0.2
+  ) +
+  scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.8))) +
+  scale_y_continuous(labels = function(x) paste(x, "%")) +
+  scale_fill_manual(values = c("männlich" = "#00C4A9", "weiblich" = "#8A01F5")) +
+  scale_size_area(max_size = 9) +
+  coord_cartesian(
+    clip = "off", ylim = c(50, 100)) +
+  labs(
+    subtitle = "Wahlbeteiligung nach Altersgruppe und Geschlecht",
+    x = "Altersgruppe",
+    y = "Wahlbeteiligung (in %)",
+    fill = "Geschlecht"
+  )
+
+```
+
 
 ```{r wbt-altersgruppen-animation, gganimate = list(nframes = 100, fps = 12), fig.width=8, cache=TRUE}
 p <- df_wbt_total_ab1972 |> 
@@ -132,6 +172,10 @@ p <- df_wbt_total_ab1972 |>
   scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.8))) +
   scale_y_continuous(labels = function(x) paste(x, "%")) +
   coord_cartesian(clip = "off") +
+  labs(
+    x = "Altersgruppe",
+    y = "Wahlbeteiligung (in %)",
+  ) + 
   theme_custom_gif()
 
 p_anim <- p +
@@ -178,9 +222,13 @@ p <- df_wbt_total_ab1972 |>
   ) +
   scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.8))) +
   scale_y_continuous(labels = function(x) paste(x, "%")) +
-  scale_color_manual(values = c("m" = "#00C4A9", "w" = "#8A01F5")) +
-  coord_cartesian(ylim = c(55, 100), clip = "off") +
+  scale_color_manual(values = c("m" = color_pal[2], "w" = color_pal[3])) +
+  coord_cartesian(ylim = c(50, 100), clip = "off") +
   guides(color = "none") +
+  labs(
+    x = "Altersgruppe",
+    y = "Wahlbeteiligung (in %)",
+  ) +
   theme_custom_gif()
 
 p_anim <- p +
@@ -211,27 +259,57 @@ p_wbt_altersgruppen <- df_wbt_total_ab1972 |>
     ) +
   scale_fill_brewer(type = "qual", palette = "Set3")
 
-p_wbt_altersgruppen
+# p_wbt_altersgruppen
 
 ```
 
-```{r waehler-wahlberechtigte-nach-altersgruppen, fig.height=15}
+```{r waehler-nach-altersgruppen-2, fig.width=8}
 
-df_wbt_total_ab1972 |> 
+highlighted_altersgrp_jung <- c("18-20", "21-24")
+highlighted_altersgrp_alt <- c("70 und mehr", "60-69")
+
+btw_wahljahre <- c(1953, 1957, 1961, 1965, 1969, 1972, 1976, 1980, 1983, 1987,
+                   1990, 1994, 1998, 2002, 2005, 2009, 2013, 2017, 2021)
+
+df_wbt |> 
   filter(altersgruppe != "Summe", geschlecht == "Summe") |> 
-  select(wahl, altersgruppe, wahlberechtigte, waehler) |> 
-  pivot_longer(cols = c(wahlberechtigte, waehler), names_to = "gruppe", values_to = "anzahl") |> 
-  ggplot(aes(gruppe, anzahl, fill = altersgruppe)) +
-  geom_col(position = "fill", col = "white", linewidth = 0.1) +
+  mutate(altersgruppe_highlighted = case_when(
+    altersgruppe %in% highlighted_altersgrp_jung ~ "1",
+    altersgruppe %in% highlighted_altersgrp_alt ~ "3",
+    TRUE ~ "2"
+  )) |> 
+  mutate(wahl = factor(wahl, levels = btw_wahljahre)) |> 
+  ggplot(aes(wahl, waehler, group = altersgruppe, 
+             fill = altersgruppe_highlighted)) +
+  geom_col(position = "fill", col = "white", linewidth = 0.2) +
+  # geom_text(aes(label = altersgruppe), position = position_fill(), size = 2, vjust = 1) +
+  scale_x_discrete(drop = FALSE) +
   scale_y_continuous(
     breaks = seq(0, 1, 0.1),
     labels = scales::label_percent(),
-    sec.axis = dup_axis()
+    sec.axis = dup_axis(),
+    expand = expansion(mult = c(0, 0.05))
     ) +
-  scale_fill_brewer(type = "qual", palette = "Set3") +
-  facet_wrap(vars(wahl), ncol = 2)
+  scale_fill_manual(values = c("1" = color_pal[3], "2" = "grey75", "3" = color_pal[1])) +
+  guides(fill = "none") +
+  labs(
+    title = "Der Anteil der Wählenden ab 60 Jahren hat sich seit 1953 verdoppelt",
+    subtitle = sprintf("Wählende <b style='color:%s'>unter 25 Jahre</b> | <b style='color:%s'>ab 60 Jahren</b>", color_pal[3], color_pal[1]),
+    x = NULL,
+    y = "Anteil an der Wählerschaft (in %)",
+  ) + 
+  theme(
+    legend.position = "bottom",
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.title.y.right = element_blank()
+  )
 
 ```
+
+## Backup
+
+::: {.callout-note appearance="simple" title="Backup" collapse="true"}
 
 ### Wahlbeteiligung nach Altersgruppe 2021
 
@@ -292,6 +370,7 @@ df_wbt_laender |>
   scale_x_continuous(breaks = btw_jahre[seq(1, length(btw_jahre), 2)]) +
   coord_cartesian(ylim = c(50, 100)) +
   facet_wrap(vars(land2))
+
 ```
 
 ## Strukturdaten der Wahlkreise 2021
@@ -371,3 +450,5 @@ df_wk_ergebnisse_struktur_2021 |>
   scale_y_continuous(labels = scales::label_percent()) 
 
 ```
+
+:::
