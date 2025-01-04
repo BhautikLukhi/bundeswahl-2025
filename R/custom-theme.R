@@ -9,7 +9,7 @@ theme_custom <- function(base_size = 11, ...) {
       plot.title = element_markdown(face = "bold"),
       plot.title.position = "plot",
       plot.subtitle = element_markdown(),
-      plot.caption = element_markdown()
+      plot.caption = element_markdown(hjust = 0)
     )  
 }
 

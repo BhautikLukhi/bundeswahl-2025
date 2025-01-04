@@ -66,7 +66,8 @@ df_wbt |>
     linewidth = 2.5, lineend = "square"
   ) +
   scale_color_gradient(low = "grey2", high = "grey90") +
-  guides(color = "none")
+  guides(color = "none") +
+  labs(x = "Alter")
   
 ```
 
@@ -111,7 +112,8 @@ df_wbt_total_ab1972 |>
     subtitle = "Wahlbeteiligung nach Altersgruppe und Geschlecht",
     x = "Altersgruppe",
     y = "Wahlbeteiligung (in %)",
-    fill = "Geschlecht"
+    fill = "Geschlecht",
+    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing"
   )
 
 ```
@@ -146,27 +148,27 @@ df_wbt_total_ab1972 |>
     subtitle = "Wahlbeteiligung nach Altersgruppe und Geschlecht",
     x = "Altersgruppe",
     y = "Wahlbeteiligung (in %)",
-    fill = "Geschlecht"
+    fill = "Geschlecht",
+    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing"
   )
 
 ```
 
 
-```{r wbt-altersgruppen-animation, gganimate = list(nframes = 100, fps = 12), fig.width=8, cache=TRUE}
+```{r wbt-altersgruppen-animation, gganimate = list(nframes = 100, fps = 12), fig.width=5, fig.height=5, fig.dpi=150, cache=TRUE}
 p <- df_wbt_total_ab1972 |> 
   filter(altersgruppe != "Summe", geschlecht == "Summe") |> 
-  # mutate(wahl = factor(wahl)) |> 
   ggplot(aes(altersgruppe, wahlbeteiligung, group = wahl)) +
-  geom_line(color = "purple", linewidth = 1.2) +
+  geom_line(color = color_pal[1], linewidth = 1.2) +
   geom_point(
-    shape = 21, fill = "white", color = "purple"
+    shape = 21, fill = "white", color = color_pal[1]
   ) +
   geom_text(
     data = ~subset(., altersgruppe == max(altersgruppe)),
     aes(x = altersgruppe, 
         y = wahlbeteiligung,
         label = wahl), 
-    color = "purple", hjust = 0, nudge_x = 0.1, family = "Roboto Condensed", size = 5,
+    color = color_pal[1], hjust = 0, nudge_x = 0.1, family = "Roboto Condensed", size = 5,
     fontface = "bold"
   ) +
   scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.8))) +
@@ -175,6 +177,7 @@ p <- df_wbt_total_ab1972 |>
   labs(
     x = "Altersgruppe",
     y = "Wahlbeteiligung (in %)",
+    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing"
   ) + 
   theme_custom_gif()
 
@@ -226,6 +229,8 @@ p <- df_wbt_total_ab1972 |>
   coord_cartesian(ylim = c(50, 100), clip = "off") +
   guides(color = "none") +
   labs(
+    title = "Wahlbeteiligung nach Geschlecht und Altersgruppe",
+    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing",
     x = "Altersgruppe",
     y = "Wahlbeteiligung (in %)",
   ) +
@@ -295,6 +300,7 @@ df_wbt |>
   labs(
     title = "Der Anteil der Wählenden ab 60 Jahren hat sich seit 1953 verdoppelt",
     subtitle = sprintf("Wählende <b style='color:%s'>unter 25 Jahre</b> | <b style='color:%s'>ab 60 Jahren</b>", color_pal[3], color_pal[1]),
+    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing",
     x = NULL,
     y = "Anteil an der Wählerschaft (in %)",
   ) + 
