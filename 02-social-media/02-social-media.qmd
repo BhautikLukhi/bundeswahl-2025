@@ -1,0 +1,150 @@
+---
+title: "01 Social Media"
+format:
+  html:
+    code-fold: true
+    message: false
+    warning: false
+---
+
+```{r setup}
+library(tidyverse)
+library(ggtext)
+library(gganimate)
+library(gt)
+library(gtsummary)
+library(here)
+library(haven)
+library(labelled)
+
+knitr::opts_chunk$set(dev = "ragg_png")
+
+source(here("R", "custom-theme.R"))
+theme_set(theme_custom())
+```
+
+## Datenquelle
+
+### Bericht
+
+https://library.fes.de/pdf-files/a-p-b/21722.pdf
+
+### Daten einlesen
+
+```{r read-data}
+df <- read_stata(here("data", "EPW2024", "ew24AW.dta"))
+```
+
+```{r}
+colnames(df)
+```
+
+```{r}
+skimr::skim(df)
+```
+
+
+```{r}
+df |> 
+  select(geschlecht, alter) |> 
+  mutate(across(everything(), haven::as_factor)) |> 
+  tbl_summary()
+```
+
+
+```{r}
+create_summary_table <- function(x) {
+  df <- df |> 
+    select(all_of(x)) |> 
+    mutate(across(everything(), haven::as_factor))
+  colnames(df) <- "var"
+  df |> 
+    tbl_summary(
+      label = list("var" = "Label")
+    )
+}
+
+vars <- colnames(df)[str_detect(colnames(df), "^v32_")]
+var_labels <- unlist(var_label(df[, vars]))
+
+map(vars, create_summary_table) |> 
+  tbl_merge(
+    tab_spanner = var_labels
+  )
+
+```
+
+
+Welcher Anteil informiert sich ausschließlich über Internet und Social Media?
+
+```{r}
+
+df |> 
+  select(starts_with("v31_")) |> 
+  na.omit() |> 
+  mutate(
+    polinfo_online_only = (v31_4 > 1 | v31_5 > 1) & (v31_1 == 1 & v31_2 == 1 & v31_3 == 1),
+    polinfo_socialmedia_only = v31_5 > 1 & (v31_1 == 1 & v31_2 == 1 & v31_3 == 1 & v31_3 == 1),
+    polinfo_non = v31_1 == 1 & v31_2 == 1 & v31_3 == 1 & v31_4 == 1 & v31_5 == 1
+    ) |> 
+  count(polinfo_non, polinfo_online_only, polinfo_socialmedia_only)
+
+```
+
+
+
+```{r}
+var_labels <- df |> 
+  select(starts_with("v33_")) |> 
+  get_variable_labels() |> 
+  unlist()
+
+freq_politikbezug <- df |> 
+  select(invcode, starts_with("v33_")) |> 
+  mutate(across(starts_with("v33_"), to_factor)) |> 
+  pivot_longer(cols = starts_with("v33_"), names_to = "platform", values_to = "freq_politikbezug") |> 
+  mutate(platform = var_labels[platform]) |> 
+  na.omit() |> 
+  count(platform, freq_politikbezug) |> 
+  mutate(freq_politikbezug2 = case_when(
+    str_sub(freq_politikbezug, 1, 1) %in% c(1, 2) ~ "Selten/nie",
+    str_sub(freq_politikbezug, 1, 1) %in% c(4, 5) ~ "Häufig/sehr häufig",
+    str_sub(freq_politikbezug, 1, 1) == 3 ~ "Manchmal"
+  )) |> 
+  add_count(platform, freq_politikbezug2, wt = n, name = "n2") 
+
+# Reihenfolge der Plattformen
+platforms_freq_order <- freq_politikbezug |> 
+  add_count(platform, wt = n, name = "total_n") |> 
+  filter(freq_politikbezug2 == "Häufig/sehr häufig") |> 
+  mutate(share = n2 / total_n) |> 
+  arrange(share) |> 
+  distinct(platform) |> 
+  pull()
+
+freq_politikbezug |> 
+  filter(platform != "Anderes Netzwerk") |> 
+  mutate(platform = factor(platform, levels = platforms_freq_order)) |> 
+  ggplot(aes(n, platform, fill = freq_politikbezug2, group = freq_politikbezug)) +
+  geom_col(position = "fill", color = "white") +
+  scale_x_continuous(
+    labels = scales::label_percent(), breaks = seq(0, 1, 0.2), position = "top",
+    expand = expansion(mult = c(0, 0))) +
+  guides(fill = guide_legend()) +
+  labs(
+    y = NULL
+  ) +
+  theme(
+    legend.position = "top",
+    axis.text.y = element_text(hjust = 0))
+```
+
+Idee: Marimekko-Chart mit Anzahl der Nutzer auf der y-Achse?
+
+## Fragestellungen
+
+- Welcher Anteil informiert sich ausschließlich über Internet und Social Media?
+- Wahrgenommene Parteien
+ 
+
+
