@@ -15,7 +15,6 @@ Quelle: <https://www.bundeswahlleiterin.de/bundestagswahlen/2021/ergebnisse/repr
 library(tidyverse)
 library(ggtext)
 library(gganimate)
-library(gt)
 library(here)
 
 knitr::opts_chunk$set(dev = "ragg_png")
@@ -153,7 +152,6 @@ df_wbt_total_ab1972 |>
   )
 
 ```
-
 
 ```{r wbt-altersgruppen-animation, gganimate = list(nframes = 100, fps = 12), fig.width=5, fig.height=5, fig.dpi=150, cache=TRUE}
 p <- df_wbt_total_ab1972 |> 
@@ -316,7 +314,6 @@ df_wbt |>
 ## Backup
 
 ::: {.callout-note appearance="simple" title="Backup" collapse="true"}
-
 ### Wahlbeteiligung nach Altersgruppe 2021
 
 Marimekko-Chart, das die Größe der Altersgruppen auf der x-Achse abbildet, y–Achse Wahlbeteiligung. Fläche der Rechtecke ergibt die Anzahl der Wähler in der jeweiligen Altersgruppe.
@@ -456,5 +453,4 @@ df_wk_ergebnisse_struktur_2021 |>
   scale_y_continuous(labels = scales::label_percent()) 
 
 ```
-
 :::
