@@ -21,3 +21,14 @@ theme_custom_gif <- function(...) {
 
 # Color palette
 color_pal <- c("#1b1b3a", "#216869", "#c17dfa", "#FA8334", "#9EC5AB", "#F2CD5D", "#21D19F")
+
+# Parties colors
+party_pal <- c(
+  "SPD" = "#E3000F",
+  "CDU/CSU" = "#000000",
+  "FDP" = "#FFEF00",
+  "Grüne" = "#1AA037",
+  "AfD" = "#0489DB",
+  "Linke" = "#BD4459",
+  "BSW" = "#F39324"
+  )
