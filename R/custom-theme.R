@@ -2,7 +2,7 @@ library(ggplot2)
 library(ggtext)
 
 theme_custom <- function(base_size = 11, ...) {
-  theme_minimal(base_family = "Roboto Condensed", base_size = base_size) +
+  theme_minimal(base_family = "Roboto Slab", base_size = base_size) +
     theme(
       plot.background = element_rect(color = "#F8F8F8"),
       plot.margin = margin(t = 2, l = 2, r = 50, b = 2),
