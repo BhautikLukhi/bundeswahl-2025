@@ -96,11 +96,11 @@ df_wbt_total_ab1972 |>
     color = "grey50", linewidth = 0.9) +
   geom_point(
     aes(y = wbt_m, fill = "männlich"),
-    size = 4, shape = 21, color = "white", stroke = 0.2
+    size = 4, shape = 21, color = "white", stroke = 0.5
   ) +
   geom_point(
     aes(y = wbt_w, fill = "weiblich"),
-    size = 4, shape = 21, color = "white", stroke = 0.2
+    size = 4, shape = 21, color = "white", stroke = 0.5
   ) +
   scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.8))) +
   scale_y_continuous(labels = function(x) paste(x, "%")) +
@@ -119,7 +119,7 @@ df_wbt_total_ab1972 |>
 
 Hier noch mal wie angekündigt eine Version, in der die Größe der Kreise proportional zu der Anzahl der Wählenden ist.
 
-```{r wbt-altersgruppen-geschlecht-dumbbell-plot-2}
+```{r wbt-altersgruppen-geschlecht-dumbbell-plot-2, fig.width=9, fig.height=6}
 df_wbt_total_ab1972 |> 
   filter(altersgruppe != "Summe", geschlecht != "Summe", wahl == 2021) |> 
   select(wahl, geschlecht, altersgruppe, wahlbeteiligung, waehler) |> 
@@ -131,23 +131,24 @@ df_wbt_total_ab1972 |>
     color = "grey50", linewidth = 0.9) +
   geom_point(
     aes(y = wahlbeteiligung_m, fill = "männlich", size = waehler_m),
-    shape = 21, color = "white", stroke = 0.2
+    shape = 21, color = "white", stroke = 0.5
   ) +
   geom_point(
     aes(y = wahlbeteiligung_w, fill = "weiblich", size = waehler_w),
-    shape = 21, color = "white", stroke = 0.2
+    shape = 21, color = "white", stroke = 0.5
   ) +
   scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.8))) +
   scale_y_continuous(labels = function(x) paste(x, "%")) +
   scale_fill_manual(values = c("männlich" = "#00C4A9", "weiblich" = "#8A01F5")) +
-  scale_size_area(max_size = 9) +
+  scale_size_area(max_size = 9, labels = scales::label_number(scale = 1e-6, suffix = " Mio.")) +
   coord_cartesian(
     clip = "off", ylim = c(50, 100)) +
+  guides(size = guide_legend(override.aes = list("color" = "grey10", stroke = 0.2))) +
   labs(
     subtitle = "Wahlbeteiligung nach Altersgruppe und Geschlecht",
     x = "Altersgruppe",
     y = "Wahlbeteiligung (in %)",
-    fill = "Geschlecht",
+    fill = "Geschlecht", size = "Anzahl Wählende",
     caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing"
   )
 
@@ -166,7 +167,7 @@ p <- df_wbt_total_ab1972 |>
     aes(x = altersgruppe, 
         y = wahlbeteiligung,
         label = wahl), 
-    color = color_pal[1], hjust = 0, nudge_x = 0.1, family = "Roboto Condensed", size = 5,
+    color = color_pal[1], hjust = 0, nudge_x = 0.1, family = "Roboto Slab", size = 5,
     fontface = "bold"
   ) +
   scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.8))) +
@@ -209,7 +210,7 @@ p <- df_wbt_total_ab1972 |>
     aes(x = altersgruppe, 
         y = wahlbeteiligung,
         label = geschlecht_label, color = geschlecht), 
-    hjust = 0, nudge_x = 0.1, family = "Roboto Condensed", size = 3,
+    hjust = 0, nudge_x = 0.1, family = "Roboto Slab", size = 3,
     fontface = "bold"
   ) +
   geom_richtext(
@@ -217,7 +218,7 @@ p <- df_wbt_total_ab1972 |>
       distinct(altersgruppe, wahl),
     aes(x = altersgruppe, y = 60, 
         label = sprintf("<span style='font-size: 12pt'>Bundestagswahl</span><br><b>%s</b>", wahl)),
-    color = "grey50", size = 12, hjust = 1, family = "Roboto Condensed",
+    color = "grey50", size = 12, hjust = 1, family = "Roboto Slab",
     fill = NA, label.size = 0, lineheight = 0.2,
     inherit.aes = FALSE
   ) +
@@ -274,18 +275,40 @@ highlighted_altersgrp_alt <- c("70 und mehr", "60-69")
 btw_wahljahre <- c(1953, 1957, 1961, 1965, 1969, 1972, 1976, 1980, 1983, 1987,
                    1990, 1994, 1998, 2002, 2005, 2009, 2013, 2017, 2021)
 
-df_wbt |> 
+
+df_plot_wbt_altersgrp <- df_wbt |> 
   filter(altersgruppe != "Summe", geschlecht == "Summe") |> 
+  select(wahl, altersgruppe, waehler) |> 
+  group_by(wahl) |> 
+  mutate(waehler_share = waehler / sum(waehler)) |> 
+  ungroup() |> 
   mutate(altersgruppe_highlighted = case_when(
     altersgruppe %in% highlighted_altersgrp_jung ~ "1",
     altersgruppe %in% highlighted_altersgrp_alt ~ "3",
     TRUE ~ "2"
   )) |> 
-  mutate(wahl = factor(wahl, levels = btw_wahljahre)) |> 
-  ggplot(aes(wahl, waehler, group = altersgruppe, 
+  mutate(wahl = factor(wahl, levels = btw_wahljahre)) 
+
+
+# Daten für die Label am ersten Balken
+df_plot_wbt_altersgrp_labels <- df_plot_wbt_altersgrp |> 
+  filter(wahl ==  first(wahl)) |> 
+  arrange(desc(altersgruppe)) |> 
+  mutate(
+    ypos_label = cumsum(waehler_share) - waehler_share / 2)
+
+
+df_plot_wbt_altersgrp |> 
+  ggplot(aes(wahl, waehler_share, group = altersgruppe, 
              fill = altersgruppe_highlighted)) +
   geom_col(position = "fill", col = "white", linewidth = 0.2) +
-  # geom_text(aes(label = altersgruppe), position = position_fill(), size = 2, vjust = 1) +
+  # Label für den ersten Balken
+  geom_text(
+    data = df_plot_wbt_altersgrp_labels,
+    aes(wahl, ypos_label, label = str_wrap(altersgruppe, 5),
+        color = ifelse(altersgruppe_highlighted == "3", "white", "black")
+        ), 
+    inherit.aes = FALSE, size = 2, vjust = 0.5,  family = "Roboto Slab", lineheight = 0.9) +
   scale_x_discrete(drop = FALSE) +
   scale_y_continuous(
     breaks = seq(0, 1, 0.1),
@@ -294,6 +317,7 @@ df_wbt |>
     expand = expansion(mult = c(0, 0.05))
     ) +
   scale_fill_manual(values = c("1" = color_pal[3], "2" = "grey75", "3" = color_pal[1])) +
+  scale_color_identity() +
   guides(fill = "none") +
   labs(
     title = "Der Anteil der Wählenden ab 60 Jahren hat sich seit 1953 verdoppelt",
@@ -322,7 +346,7 @@ Ggf. animiert über Zeit oder 2-3 Charts, um die Veränderungen der Zusammensetz
 
 Ggf. nur Anteil der Wähler nach Altersgruppe? Weniger Komplexität als das Marimekko-Chart.
 
-## Briefwahl
+### Briefwahl
 
 ```{r briefwahl-load-data}
 url_modus <- 
@@ -330,7 +354,7 @@ url_modus <-
 df_modus <- read_csv2(url_modus, skip = 12)
 ```
 
-## Wahlbeteiligung nach Bundesländern insgesamt
+### Wahlbeteiligung nach Bundesländern insgesamt
 
 ```{r wbt-länder-daten}
 
@@ -376,7 +400,7 @@ df_wbt_laender |>
 
 ```
 
-## Strukturdaten der Wahlkreise 2021
+### Strukturdaten der Wahlkreise 2021
 
 <https://www.bundeswahlleiterin.de/dam/jcr/b1d3fc4f-17eb-455f-a01c-a0bf32135c5d/btw21_strukturdaten.csv>
 
