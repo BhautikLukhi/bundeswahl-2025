@@ -1,21 +1,24 @@
 library(ggplot2)
 library(ggtext)
 
-theme_custom <- function(base_size = 11, ...) {
-  theme_minimal(base_family = "Roboto Slab", base_size = base_size) +
+theme_custom <- function(base_size = 10, ...) {
+  theme_minimal(base_family = "Roboto Condensed", base_size = base_size) +
     theme(
-      plot.background = element_rect(color = "#F8F8F8"),
-      plot.margin = margin(t = 2, l = 2, r = 50, b = 2),
-      plot.title = element_markdown(face = "bold"),
+      plot.background = element_rect(color = "white", fill = "white"),
+      plot.margin = margin(t = 4, l = 6, r = 6, b = 4),
+      plot.title = element_markdown(
+        family = "Roboto Slab", face = "bold", lineheight = 1.25),
       plot.title.position = "plot",
-      plot.subtitle = element_markdown(),
-      plot.caption = element_textbox(width = 1, hjust = 0)
+      plot.subtitle = element_markdown(
+        family = "Roboto Slab", lineheight = 1.25),
+      plot.caption = element_markdown(
+        family = "Roboto Slab", hjust = 0, lineheight = 1.1)
     )  
 }
 
 # Theme with smaller font size for GIFs
 theme_custom_gif <- function(...) {
-  theme_custom(base_size = 8)
+  theme_custom(base_size = 11)
 }
 
 

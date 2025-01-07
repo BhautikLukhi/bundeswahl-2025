@@ -102,19 +102,20 @@ df_wbt_total_ab1972 |>
     aes(y = wbt_w, fill = "weiblich"),
     size = 4, shape = 21, color = "white", stroke = 0.5
   ) +
-  scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.8))) +
+  scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.4))) +
   scale_y_continuous(labels = function(x) paste(x, "%")) +
-  scale_fill_manual(values = c("männlich" = "#00C4A9", "weiblich" = "#8A01F5")) +
+  scale_fill_manual(values = c("männlich" = color_pal[2], "weiblich" = color_pal[3])) +
   coord_cartesian(
     clip = "off", ylim = c(50, 100)) +
   labs(
-    subtitle = "Wahlbeteiligung nach Altersgruppe und Geschlecht",
+    title = "Wahlbeteiligung nach Altersgruppe und Geschlecht",
     x = "Altersgruppe",
     y = "Wahlbeteiligung (in %)",
     fill = "Geschlecht",
-    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing"
+    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing & Thorsten Faas"
   )
-
+# ggsave(here("01-wahlbeteiligung", "plots", "wbt-altersgruppen-geschlecht-dumbbell-plot-1.png"),
+#        width = 1600, height = 1200, units = "px", dpi = 300, scale = 1.5)
 ```
 
 Hier noch mal wie angekündigt eine Version, in der die Größe der Kreise proportional zu der Anzahl der Wählenden ist.
@@ -131,30 +132,61 @@ df_wbt_total_ab1972 |>
     color = "grey50", linewidth = 0.9) +
   geom_point(
     aes(y = wahlbeteiligung_m, fill = "männlich", size = waehler_m),
-    shape = 21, color = "white", stroke = 0.5
+    shape = 21, color = "white", stroke = 0.4
   ) +
   geom_point(
     aes(y = wahlbeteiligung_w, fill = "weiblich", size = waehler_w),
-    shape = 21, color = "white", stroke = 0.5
+    shape = 21, color = "white", stroke = 0.4
   ) +
-  scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.8))) +
+  annotate(
+    "richtext",
+    label = c(
+      sprintf("In den Altersgruppen **unter 60 Jahren**<br>
+    lag die Wahlbeteiligung von <b style='color:%s'>Frauen</b><br>
+    durchweg über jener der <b style='color:%s'>Männer</b>", 
+              color_pal[3], color_pal[2]),
+      sprintf("Allein in der Gruppe<br>**ab 70 Jahren** beteiligten<br>
+      sich anteilig mehr<br>
+      <b style='color:%s'>Männer</b> als <b style='color:%s'>Frauen</b>", 
+              color_pal[2], color_pal[3]),
+      "Die Größe der Kreise gibt<br>die Anzahl der Wählenden<br>
+      in der jeweiligen Gruppe an."
+      ),
+    x = c(2, 7, 8.5), y = c(83, 62, 90),
+    family = "Roboto Condensed", size = 3.5, fill = "white", label.size = 0, hjust = 0,
+    label.padding = unit(0, "mm")
+  ) +
+  annotate(
+    GeomCurve,
+    x = c(2, 9, 9.6), 
+    xend = c(2, 10, 10),
+    y = c(79.5, 65.5, 88),
+    yend = c(73.5, 70.5, 85),
+    arrow = arrow(angle = 20, length = unit(0.1, "in")), linewidth = 0.2,
+    curvature = 0.2
+  ) +
+  scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.4))) +
   scale_y_continuous(labels = function(x) paste(x, "%")) +
-  scale_fill_manual(values = c("männlich" = "#00C4A9", "weiblich" = "#8A01F5")) +
+  scale_fill_manual(values = c("männlich" = color_pal[2], "weiblich" = color_pal[3])) +
   scale_size_area(max_size = 9, labels = scales::label_number(scale = 1e-6, suffix = " Mio.")) +
   coord_cartesian(
     clip = "off", ylim = c(50, 100)) +
-  guides(size = guide_legend(override.aes = list("color" = "grey10", stroke = 0.2))) +
+  guides(
+    size = guide_legend(override.aes = list("color" = "grey10", stroke = 0.2), order = 2),
+    fill = "none"
+    ) +
   labs(
-    subtitle = "Wahlbeteiligung nach Altersgruppe und Geschlecht",
+    title = "Wahlbeteiligung bei der Bundestagswahl 2021 nach Altersgruppe<br>und Geschlecht",
     x = "Altersgruppe",
     y = "Wahlbeteiligung (in %)",
     fill = "Geschlecht", size = "Anzahl Wählende",
-    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing"
+    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing & Thorsten Faas"
   )
-
+ggsave(here("01-wahlbeteiligung", "plots", "wbt-altersgruppen-geschlecht-dumbbell-plot-2.png"),
+       width = 1600, height = 1200, units = "px", dpi = 300, scale = 1.4)
 ```
 
-```{r wbt-altersgruppen-animation, gganimate = list(nframes = 100, fps = 12), fig.width=5, fig.height=5, fig.dpi=150, cache=TRUE}
+```{r wbt-altersgruppen-animation, gganimate = list(nframes = 100, fps = 12), fig.width=6, fig.height=5, fig.dpi=150, cache=FALSE}
 p <- df_wbt_total_ab1972 |> 
   filter(altersgruppe != "Summe", geschlecht == "Summe") |> 
   ggplot(aes(altersgruppe, wahlbeteiligung, group = wahl)) +
@@ -167,18 +199,20 @@ p <- df_wbt_total_ab1972 |>
     aes(x = altersgruppe, 
         y = wahlbeteiligung,
         label = wahl), 
-    color = color_pal[1], hjust = 0, nudge_x = 0.1, family = "Roboto Slab", size = 5,
+    color = color_pal[1], hjust = 0, nudge_x = 0.1, family = "Roboto Condensed", size = 5,
     fontface = "bold"
   ) +
-  scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.8))) +
+  scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.2))) +
   scale_y_continuous(labels = function(x) paste(x, "%")) +
   coord_cartesian(clip = "off") +
   labs(
+    title = "Wahlbeteiligung nach Altersgruppen",
     x = "Altersgruppe",
     y = "Wahlbeteiligung (in %)",
-    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing"
+    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik.<br>Visualisierung: Ansgar Wolsing & Thorsten Faas"
   ) + 
-  theme_custom_gif()
+  theme_custom_gif() +
+  theme(plot.margin = margin(t = 4, l = 4, r = 36, b = 4))
 
 p_anim <- p +
   transition_states(wahl) +
@@ -190,13 +224,16 @@ p_anim <- p +
 
 n_wahlen <- length(unique(df_wbt_total_ab1972$wahl))
 
-animate(p_anim, fps = 10, nframes = 100, end_pause = 20, rewind = FALSE)
+animate(p_anim, fps = 10, nframes = 60, end_pause = 8, rewind = FALSE,
+       res = 150, width = 960, height = 800, units = "px")
+anim_save(
+  here("01-wahlbeteiligung", "plots", "wbt-altersgruppen.gif")) 
 ```
 
-```{r wbt-altersgruppen-geschlecht-animation, gganimate = list(nframes = 100, fps = 12), fig.width=5, fig.height=5, fig.dpi=150, cache=TRUE}
+```{r wbt-altersgruppen-geschlecht-animation, gganimate = list(nframes = 100, fps = 12), fig.width=6, fig.height=5, fig.dpi=150, cache=FALSE}
 p <- df_wbt_total_ab1972 |> 
   filter(altersgruppe != "Summe", geschlecht != "Summe") |> 
-  mutate(geschlecht_label = ifelse(geschlecht == "m", "Wähler", "Wählerinnen")) |> 
+  mutate(geschlecht_label = ifelse(geschlecht == "m", "männlich", "weiblich")) |> 
   ggplot(aes(altersgruppe, wahlbeteiligung, group = paste(wahl, geschlecht))) +
   geom_line(
     aes(color = geschlecht),
@@ -210,30 +247,31 @@ p <- df_wbt_total_ab1972 |>
     aes(x = altersgruppe, 
         y = wahlbeteiligung,
         label = geschlecht_label, color = geschlecht), 
-    hjust = 0, nudge_x = 0.1, family = "Roboto Slab", size = 3,
+    hjust = 0, nudge_x = 0.1, family = "Roboto Condensed", size = 4.5,
     fontface = "bold"
   ) +
   geom_richtext(
     data = ~subset(., altersgruppe == max(altersgruppe)) |> 
       distinct(altersgruppe, wahl),
     aes(x = altersgruppe, y = 60, 
-        label = sprintf("<span style='font-size: 12pt'>Bundestagswahl</span><br><b>%s</b>", wahl)),
-    color = "grey50", size = 12, hjust = 1, family = "Roboto Slab",
+        label = sprintf("<span style='font-size: 16pt'>Bundestagswahl</span><br><b>%s</b>", wahl)),
+    color = "grey50", size = 15, hjust = 1, family = "Roboto Condensed",
     fill = NA, label.size = 0, lineheight = 0.2,
     inherit.aes = FALSE
   ) +
-  scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.8))) +
+  scale_x_discrete(position = "top", expand = expansion(add = c(0.3, 0.3))) +
   scale_y_continuous(labels = function(x) paste(x, "%")) +
   scale_color_manual(values = c("m" = color_pal[2], "w" = color_pal[3])) +
   coord_cartesian(ylim = c(50, 100), clip = "off") +
   guides(color = "none") +
   labs(
     title = "Wahlbeteiligung nach Geschlecht und Altersgruppe",
-    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing",
+    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik.<br>Visualisierung: Ansgar Wolsing & Thorsten Faas",
     x = "Altersgruppe",
     y = "Wahlbeteiligung (in %)",
   ) +
-  theme_custom_gif()
+  theme_custom_gif() +
+  theme(plot.margin = margin(t = 4, l = 4, r = 50, b = 4))
 
 p_anim <- p +
   transition_states(wahl) +
@@ -242,10 +280,10 @@ p_anim <- p +
               # Jahreszahlen nicht mitführen
               exclude_layer = c(2, 3, 4))
 
-
-n_wahlen <- length(unique(df_wbt_total_ab1972$wahl))
-
-animate(p_anim, fps = 10, nframes = 100, end_pause = 12, rewind = FALSE)
+animate(p_anim, fps = 10, nframes = 60, end_pause = 8, rewind = FALSE,
+       res = 150, width = 960, height = 800, units = "px")
+anim_save(
+  here("01-wahlbeteiligung", "plots", "wbt-altersgruppen-geschlecht.gif"))
 ```
 
 ### Wähler nach Altersgruppen
@@ -267,7 +305,7 @@ p_wbt_altersgruppen <- df_wbt_total_ab1972 |>
 
 ```
 
-```{r waehler-nach-altersgruppen-2, fig.width=8}
+```{r waehler-nach-altersgruppen-2, fig.width=8, fig.height=6}
 
 highlighted_altersgrp_jung <- c("18-20", "21-24")
 highlighted_altersgrp_alt <- c("70 und mehr", "60-69")
@@ -306,25 +344,30 @@ df_plot_wbt_altersgrp |>
   geom_text(
     data = df_plot_wbt_altersgrp_labels,
     aes(wahl, ypos_label, label = str_wrap(altersgruppe, 5),
-        color = ifelse(altersgruppe_highlighted == "3", "white", "black")
+        color = ifelse(altersgruppe_highlighted == "2", "black", "white")
         ), 
-    inherit.aes = FALSE, size = 2, vjust = 0.5,  family = "Roboto Slab", lineheight = 0.9) +
+    inherit.aes = FALSE, size = 2.5, vjust = 0.5,  family = "Roboto Condensed SemiBold",
+    lineheight = 0.9) +
   scale_x_discrete(drop = FALSE) +
   scale_y_continuous(
     breaks = seq(0, 1, 0.1),
     labels = scales::label_percent(),
     sec.axis = dup_axis(),
-    expand = expansion(mult = c(0, 0.05))
+    expand = expansion(mult = c(0, 0.02))
     ) +
   scale_fill_manual(values = c("1" = color_pal[3], "2" = "grey75", "3" = color_pal[1])) +
   scale_color_identity() +
   guides(fill = "none") +
   labs(
     title = "Der Anteil der Wählenden ab 60 Jahren hat sich seit 1953 verdoppelt",
-    subtitle = sprintf("Wählende <b style='color:%s'>unter 25 Jahre</b> | <b style='color:%s'>ab 60 Jahren</b>", color_pal[3], color_pal[1]),
-    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing",
+    subtitle = paste(
+      sprintf("Wählende <b style='color:%s'>unter 25 Jahren</b> | <b style='color:%s'>ab 60 Jahren</b>", color_pal[3], color_pal[1]),
+      "Im ersten Balken sind die Altersgruppen aufgeführt.",
+      sep = " | "
+    ),
+    caption = "Daten: Bundeswahlleiterin, repräsentative Wahlstatistik. Visualisierung: Ansgar Wolsing & Thorsten Faas",
     x = NULL,
-    y = "Anteil an der Wählerschaft (in %)",
+    y = "Anteil der Altersgruppe an der Wählerschaft (in %)",
   ) + 
   theme(
     legend.position = "bottom",
@@ -332,7 +375,8 @@ df_plot_wbt_altersgrp |>
     panel.grid.minor = element_blank(),
     axis.title.y.right = element_blank()
   )
-
+ggsave(here("01-wahlbeteiligung", "plots", "waehler-nach-altersgruppen-2.png"),
+       width = 1600, height = 1200, units = "px", dpi = 300, scale = 1.4)
 ```
 
 ## Backup
