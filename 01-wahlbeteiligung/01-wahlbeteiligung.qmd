@@ -356,8 +356,8 @@ df_plot_wbt_altersgrp |>
     "richtext",
     x = which(levels(df_plot_wbt_altersgrp$wahl) == 1972), y = 0.85,
     label = "Seit **1972** sind<br>18-20-Jährige<br>wahlberechtigt",
-    family = "Roboto Condensed", size = 2.5, hjust = 0, vjust = 1,
-    color = "black", label.size = 0, fill = alpha("white", 0.3)
+    family = "Roboto Condensed", size = 3, hjust = 0, vjust = 1,
+    color = "black", label.size = 0, fill = alpha("white", 0.4)
   ) +
   annotate(
     GeomCurve,
