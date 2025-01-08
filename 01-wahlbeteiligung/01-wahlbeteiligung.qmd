@@ -186,7 +186,7 @@ ggsave(here("01-wahlbeteiligung", "plots", "wbt-altersgruppen-geschlecht-dumbbel
        width = 1600, height = 1200, units = "px", dpi = 300, scale = 1.4)
 ```
 
-```{r wbt-altersgruppen-animation, gganimate = list(nframes = 100, fps = 12), fig.width=6, fig.height=5, fig.dpi=150, cache=FALSE}
+```{r wbt-altersgruppen-animation, gganimate = list(nframes = 100, fps = 12), fig.width=6, fig.height=5, fig.dpi=150, cache=TRUE}
 p <- df_wbt_total_ab1972 |> 
   filter(altersgruppe != "Summe", geschlecht == "Summe") |> 
   ggplot(aes(altersgruppe, wahlbeteiligung, group = wahl)) +
@@ -230,7 +230,7 @@ anim_save(
   here("01-wahlbeteiligung", "plots", "wbt-altersgruppen.gif")) 
 ```
 
-```{r wbt-altersgruppen-geschlecht-animation, gganimate = list(nframes = 100, fps = 12), fig.width=6, fig.height=5, fig.dpi=150, cache=FALSE}
+```{r wbt-altersgruppen-geschlecht-animation, gganimate = list(nframes = 100, fps = 12), fig.width=6, fig.height=5, fig.dpi=150, cache=TRUE}
 p <- df_wbt_total_ab1972 |> 
   filter(altersgruppe != "Summe", geschlecht != "Summe") |> 
   mutate(geschlecht_label = ifelse(geschlecht == "m", "männlich", "weiblich")) |> 
@@ -328,19 +328,23 @@ df_plot_wbt_altersgrp <- df_wbt |>
   mutate(wahl = factor(wahl, levels = btw_wahljahre)) 
 
 
-# Daten für die Label am ersten Balken
-df_plot_wbt_altersgrp_labels <- df_plot_wbt_altersgrp |> 
-  filter(wahl ==  first(wahl)) |> 
-  arrange(desc(altersgruppe)) |> 
+# Daten für die Label am ersten Balken sowie wenn 1972 die 18-20-Jährigen hinzukommen
+df_plot_wbt_altersgrp_labels <- df_plot_wbt_altersgrp |>
+  # hier alle Altersgruppen aus 1972 behalten und später entfernen, damit die kumulativen Werte für die Position des Labels berechnet werden kann
+  filter(wahl ==  first(wahl) | wahl == 1972) |> 
+  arrange(wahl, desc(altersgruppe)) |> 
+  group_by(wahl) |> 
   mutate(
-    ypos_label = cumsum(waehler_share) - waehler_share / 2)
+    ypos_label = cumsum(waehler_share) - waehler_share / 2) |> 
+  ungroup() |> 
+  filter(wahl ==  first(wahl) | (wahl == 1972 & altersgruppe == "18-20"))
 
 
 df_plot_wbt_altersgrp |> 
   ggplot(aes(wahl, waehler_share, group = altersgruppe, 
              fill = altersgruppe_highlighted)) +
   geom_col(position = "fill", col = "white", linewidth = 0.2) +
-  # Label für den ersten Balken
+  # Label für den ersten Balken sowie 1972 Gruppe 18-20
   geom_text(
     data = df_plot_wbt_altersgrp_labels,
     aes(wahl, ypos_label, label = str_wrap(altersgruppe, 5),
@@ -348,6 +352,22 @@ df_plot_wbt_altersgrp |>
         ), 
     inherit.aes = FALSE, size = 2.5, vjust = 0.5,  family = "Roboto Condensed SemiBold",
     lineheight = 0.9) +
+  annotate(
+    "richtext",
+    x = which(levels(df_plot_wbt_altersgrp$wahl) == 1972), y = 0.85,
+    label = "Seit **1972** sind<br>18-20-Jährige<br>wahlberechtigt",
+    family = "Roboto Condensed", size = 2.5, hjust = 0, vjust = 1,
+    color = "black", label.size = 0, fill = alpha("white", 0.3)
+  ) +
+  annotate(
+    GeomCurve,
+    x = which(levels(df_plot_wbt_altersgrp$wahl) == 1972), 
+    xend = which(levels(df_plot_wbt_altersgrp$wahl) == 1972),
+    y = 0.855,
+    yend = 0.96,
+    arrow = arrow(angle = 20, length = unit(0.075, "in")), linewidth = 0.2,
+    curvature = -0.2
+  ) +
   scale_x_discrete(drop = FALSE) +
   scale_y_continuous(
     breaks = seq(0, 1, 0.1),
