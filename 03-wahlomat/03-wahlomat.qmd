@@ -1,0 +1,262 @@
+---
+title: "03 Wahlomat/Wahlhilfen"
+format:
+  html:
+    code-fold: true
+    message: false
+    warning: false
+---
+
+```{r setup}
+library(tidyverse)
+library(ggtext)
+library(jsonlite)
+library(here)
+
+knitr::opts_chunk$set(dev = "ragg_png")
+
+source(here("R", "custom-theme.R"))
+theme_set(theme_custom())
+```
+
+## Daten
+
+### Datenquelle
+
+Daten des Wahlomats für die Bundestagswahlen: <https://github.com/gockelhahn/qual-o-mat-data/>
+
+Wahlomat-Daten sind Ordnern für das Jahr (ab 2002) und darin für die jeweilige Wahl ("bundestagswahl" oder der Name des Bundeslands).
+
+![](images/clipboard-3600778520.png){width="200"}
+
+### Daten herunterladen und aufbereiten
+
+```{r download-data, cache=TRUE}
+
+pull_wahlomat_data <- function(year, region = "deutschland") {
+  gh_base_url <- "https://raw.githubusercontent.com/gockelhahn/qual-o-mat-data/refs/heads/master/data/"
+  gh_tables <- c("answer", "opinion", "overview", "party", "statement", "comment")
+  # Keine Statements der Parteien bei der BTW 2002
+  if (year == 2002) {
+    gh_tables <- gh_tables[1:5]
+  }
+  gh_filenames <- paste0(gh_tables, ".json")
+  gh_urls <- paste(gh_base_url, year, region, gh_filenames, sep = "/")
+  data <- map(gh_urls, read_json)
+  data <- set_names(data, gh_tables)
+  dfs <- map(data, bind_rows)
+  dfs
+}
+
+prepare_wahlomat_data <- function(x, with_comments = TRUE) {
+    
+  df <- x[["statement"]] |> 
+    inner_join(
+      x[["opinion"]], by = join_by(id == statement), 
+      suffix = c(".statement", ".opinion")) |> 
+  inner_join(
+    x[["answer"]], by = join_by(answer == id)) |> 
+  inner_join(
+    x[["party"]], by = join_by(party == id),
+    suffix = c(".statement", ".party"))
+  
+  if (with_comments) {
+    df <- df |>  
+      inner_join(
+        x[["comment"]], by = join_by(comment == id),
+        suffix = c(".statement", ".comment")) 
+  }
+  
+  df <- df |> 
+  select(-c(answer)) |> 
+  rename(
+    id.statement = id,
+    id.party = party, 
+    party = name,
+    answer.message = message
+    ) |> 
+  mutate(
+    answer.message = factor(answer.message, 
+                            levels = c("Stimme zu", "Neutral", "Stimme nicht zu"))
+  )
+  
+  if (with_comments) {
+     df <- df |> 
+       mutate(
+          text.comment = str_remove(text.comment, "^\""),
+          text.comment = str_remove(text.comment, "\"$")
+      )
+  }
+  
+  df
+}
+
+dfs <- pull_wahlomat_data(2002)
+df <- prepare_wahlomat_data(dfs, with_comments = FALSE)
+
+btw_years <- c(2002, 2005, 2009, 2013, 2017, 2021)
+
+dfs_all_btw <- map(
+  btw_years, function(x) {
+    dfs <- pull_wahlomat_data(x)
+    with_comments = x != 2002
+    df <- prepare_wahlomat_data(dfs, with_comments = with_comments)
+  }
+)
+dfs_all_btw <- set_names(dfs_all_btw, btw_years)
+
+write_rds(dfs_all_btw, here("03-wahlomat", "wahlomat-all-btw.rds"))
+```
+
+## Datenexploration
+
+### Länge der Antworten nach Parteien
+
+```{r textlaenge}
+df |> 
+  select(party, text.comment) |> 
+  mutate(text.comment.length = str_length(text.comment)) |> 
+  count(party, wt = text.comment.length, sort = TRUE)
+```
+
+### Verteilung der Antworten
+
+```{r verteilung-antworten}
+df |> 
+  count(party, answer.message) |> 
+  filter(answer.message == "Neutral") |> 
+  arrange(-n)
+```
+
+### Übereinstimmungen zwischen Parteien
+
+```{r uebereinstimmungen-parteien}
+library(widyr)
+
+# selected_parties <- c("CDU/CSU", "SPD", "AfD", "GRÜNE", "FDP", "DIE LINKE", "FREIE WÄHLER",
+#                       "Tierschutzpartei", "dieBasis", "Die PARTEI")
+selected_parties <- c("CDU/CSU", "SPD", "AfD", "GRÜNE", "FDP", "DIE LINKE", "FREIE WÄHLER")
+
+df_party_connections <- df |> 
+  select(id.statement, party, answer.message) |> 
+  mutate(party = ifelse(party == "CDU / CSU", "CDU/CSU", party)) |> 
+  filter(party %in% selected_parties) |> 
+  # Neutrale Positionen entfernen (TODO: tbd)
+  # filter(answer.message != "Neutral") |> 
+  mutate(statement_answer = paste(id.statement, answer.message, sep = "#")) |> 
+  pairwise_count(party, statement_answer, diag = TRUE, upper = TRUE) |> 
+  arrange(-n) |>
+  mutate(
+    item1 = factor(item1, levels = selected_parties),
+    item2 = factor(item2, levels = rev(selected_parties))
+  ) |> 
+  filter(item1 != item2) 
+
+df_party_connections |> 
+  ggplot(aes(item1, item2)) +
+  geom_point(
+    aes(size = n, fill = n),
+    shape = 21, color = "grey30") +
+  geom_text(
+    data = ~filter(., n > 19),
+    aes(label = n, color = ifelse(n >= 30, "white", "black")),
+    family = "Roboto Condensed"
+  ) +
+  scale_x_discrete(position = "top") +
+  scale_y_discrete() +
+  scale_size_area(max_size = 12) +
+  scale_fill_gradient2(midpoint = 19) +
+  scale_color_identity() +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_text(family = "Roboto Condensed SemiBold"))
+```
+
+Alle verfügbaren Bundestagswahlen
+
+```{r all-btw-combined}
+
+# Anzahl Wahlomat-Statements
+df_number_of_statements_per_year <- dfs_all_btw |>
+  bind_rows(.id = "year") |> 
+  distinct(year, id.statement) |> 
+  count(year, name = "n_statements_per_year")
+
+df_all_btw_party_connections <- dfs_all_btw |>
+  bind_rows(.id = "year") |> 
+  select(year, id.statement, party, answer.message) |> 
+  mutate(party = case_match(
+    party, 
+    "CDU / CSU" ~ "CDU/CSU", 
+    "BÜNDNIS 90/DIE GRÜNEN" ~ "GRÜNE",
+    "Bündnis 90/ Die Grünen" ~ "GRÜNE",
+    "DIE LINKE.PDS" ~ "DIE LINKE",
+    "PDS" ~ "DIE LINKE",
+    .default = party)) |> 
+  filter(party %in% selected_parties) |> 
+  mutate(statement_answer = paste(year, id.statement, answer.message, sep = "#")) |> 
+  group_by(year) |> 
+  pairwise_count(party, statement_answer, diag = FALSE, upper = TRUE) |> 
+  mutate(
+    item1 = factor(item1, levels = selected_parties),
+    item2 = factor(item2, levels = rev(selected_parties))
+  ) |> 
+  inner_join(df_number_of_statements_per_year, by = join_by(year)) |> 
+  mutate(share = n / n_statements_per_year) |> 
+  select(-n_statements_per_year)
+```
+
+```{r all-btw-combined-2}
+
+df_all_btw_party_connections |> 
+  mutate(
+    year = as.integer(year),
+    connection = paste(item1, item2, sep = " & ")) |> 
+  filter(connection == "SPD & GRÜNE") |> 
+  ggplot(aes(year, share)) +
+  geom_line() +
+  geom_point(shape = 21, size = 2, fill = "white") +
+  scale_y_continuous(labels = scales::label_percent()) +
+  coord_cartesian(ylim = c(0, 1))
+```
+
+```{r}
+
+df_all_btw_party_connections |> 
+  mutate(
+    year = as.integer(year),
+    connection = paste(item1, item2, sep = " & ")) |> 
+  filter(connection == "CDU/CSU & FDP") |> 
+  ggplot(aes(year, share)) +
+  geom_line() +
+  geom_point(shape = 21, size = 2, fill = "white") +
+  scale_y_continuous(labels = scales::label_percent()) +
+  coord_cartesian(ylim = c(0, 1))
+```
+
+Mehrere Konstellationen in einem Chart mit Facets:
+
+```{r}
+selected_connections <- c(
+  "CDU/CSU & FDP",
+  "SPD & GRÜNE",
+  "CDU/CSU & SPD",
+  "SPD & FDP",
+  "GRÜNE & FDP",
+  "SPD & DIE LINKE",
+  "AfD & CDU/CSU",
+  "AfD & FDP",
+  "AfD & SPD",
+  "AfD & GRÜNE"
+)
+
+df_all_btw_party_connections |> 
+  mutate(connection = paste(item1, item2, sep = " & ")) |> 
+  filter(connection %in% selected_connections) |> 
+  ggplot(aes(year, share, group = connection)) +
+  geom_line() +
+  geom_point(shape = 21, size = 2, fill = "white") +
+  scale_y_continuous(labels = scales::label_percent()) +
+  coord_cartesian(ylim = c(0, 1)) +
+  facet_wrap(vars(connection))
+```
