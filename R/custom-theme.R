@@ -1,7 +1,7 @@
 library(ggplot2)
 library(ggtext)
 
-theme_custom <- function(base_size = 13, ...) {
+theme_custom <- function(base_size = 12, ...) {
   theme_minimal(base_family = "Roboto Condensed", base_size = base_size) +
     theme(
       plot.background = element_rect(color = "white", fill = "white"),

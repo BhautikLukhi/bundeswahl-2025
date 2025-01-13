@@ -356,8 +356,6 @@ df_marimekko |>
 
 ### Am stärksten wahrgenommene Parteien
 
-## 
-
 Diejenigen, die v34 mit Ja beantwortet haben, wurden zufällig v35 oder v36 zugewiesen.
 
 TF: Man müsste also die „weiß nicht“-, „alle gleich“- u „ja-Anteile“ aus v34 nehmen u dann anhand von v35 den Ja-Anteil aufspalten (prozentual).
@@ -411,7 +409,7 @@ sum(df_social_media_parties$share_adjusted)
 
 ragg::agg_png(
   here("02-social-media", "plots", "treemap-haeufigste-parteien.png"),
-  width = 1600, height = 1600, units = "px", res = 300)  
+  width = 1800, height = 1600, units = "px", res = 300)  
 df_social_media_parties |> 
   mutate(party_fill = ifelse(antwort %in% c("CDU", "CSU"), "CDU/CSU", antwort)) |> 
   ggplot(
@@ -431,15 +429,39 @@ df_social_media_parties |>
   scale_color_identity() +
   guides(fill = "none") +
   labs(
-    # title = "Die AfD wurde im Europawahlkampf in Social Media deutlich häufiger<br>als die dominierende Partei wahrgenommen als andere Parteien",
-    title = "",
-    subtitle = "",
+    title = "Wahrgenommene Dominanz einzelner Parteien auf sozialen Netzwerkplattformen vor der Europawahl 2024",
+    subtitle = "Verteilung der Antworten auf die Frage, ob bestimmte Parteien in den jeweils genutzten sozialen Netzwerkplattformen besonders häufig vorkamen und – falls ja – welche Parteien das waren.<br>",
     caption = sprintf("Daten: FES, Jugendwahlstudie zur Europawahl 2024 (n=%s Befragte zwischen<br>15 und 20 Jahren). Visualisierung: Ansgar Wolsing & Thorsten Faas.", 
                       scales::number(n_responses_v34, big.mark = ".", decimal.mark = ","))
-  ) 
-
-grid.text("CSU 0,2%", x = 0.52, y = 0.944, 
-          gp = gpar(fontfamily = "Roboto Condensed SemiBold", col = "white", cex = 0.5))
+  ) +
+  theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
+  theme(
+    plot.background = element_rect(color = "white", fill = "white"),
+    plot.margin = margin(t = 4, l = 6, r = 6, b = 4),
+    plot.title = element_textbox(
+      width = 1, family = "Roboto Slab", face = "bold", lineheight = 1.25),
+    plot.title.position = "plot",
+    plot.subtitle = element_textbox(
+      width = 1, family = "Roboto Slab", lineheight = 1.25),
+    plot.caption = element_markdown(
+      family = "Roboto Slab", hjust = 0, lineheight = 1.1)
+  )  
+grid.text("CSU 0,2%", x = 0.52, y = 0.76, 
+          gp = gpar(fontfamily = "Roboto Condensed SemiBold", col = "black", cex = 0.8))
+grid.curve(
+  x1 = 0.52, y1 = 0.748,
+  x2 = 0.52, y2 = 0.72,
+  curvature = 1, angle = 0,
+  arrow = arrow(type = "open", length = unit(0.05, "inches")), 
+  gp = gpar(col = "white", lwd = 2, lty = "solid") 
+)
+grid.curve(
+  x1 = 0.52, y1 = 0.748,
+  x2 = 0.52, y2 = 0.72,
+  curvature = 1, angle = 0,
+  arrow = arrow(type = "open", length = unit(0.05, "inches")), 
+  gp = gpar(col = "black", lwd = 1, lty = "solid") 
+)
 
 dev.off()
 ```
