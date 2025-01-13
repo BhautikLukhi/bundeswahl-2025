@@ -396,14 +396,16 @@ df_social_media_parties <- df_antworten_v34 |>
   bind_rows(df_antworten_v36) |> 
   transmute(
     antwort = ifelse(!is.na(v34), v34, v36_1),
-    party_group = ifelse(!is.na(v34), "Nein", "Ja"),
+    ja_nein_group = ifelse(!is.na(v34), "Nein", "Ja"),
     n,
     share_adjusted = ifelse(!is.na(v34), share, share_adjusted)
   )
 
-# Prüfen, ob die Summe der Anteil 1 ergibt
+# Prüfen, ob die Summe der Anteile 1 ergibt
 sum(df_social_media_parties$share_adjusted)
 ```
+
+#### Variante mit Standardsortierung der Parteien nach Präsenz
 
 ```{r treemap-haeufigste-parteien}
 
@@ -414,7 +416,7 @@ df_social_media_parties |>
   mutate(party_fill = ifelse(antwort %in% c("CDU", "CSU"), "CDU/CSU", antwort)) |> 
   ggplot(
     aes(
-      area = share_adjusted, subgroup = party_group, 
+      area = share_adjusted, subgroup = ja_nein_group, 
       subgroup2 = paste(antwort, scales::percent(share_adjusted, accuracy = 0.1, decimal.mark = ","), sep = "\n"), fill = party_fill)) +
   geom_treemap(layout = "scol") +
   geom_treemap_subgroup_border(layout = "scol", col = "white", size = 3) +
@@ -429,7 +431,7 @@ df_social_media_parties |>
   scale_color_identity() +
   guides(fill = "none") +
   labs(
-    title = "Wahrgenommene Dominanz einzelner Parteien auf sozialen Netzwerkplattformen vor der Europawahl 2024",
+    title = "Wahrgenommene Präsenz einzelner Parteien auf sozialen Netzwerkplattformen vor der Europawahl 2024",
     subtitle = "Verteilung der Antworten auf die Frage, ob bestimmte Parteien in den jeweils genutzten sozialen Netzwerkplattformen besonders häufig vorkamen und – falls ja – welche Parteien das waren.<br>",
     caption = sprintf("Daten: FES, Jugendwahlstudie zur Europawahl 2024 (n=%s Befragte zwischen<br>15 und 20 Jahren). Visualisierung: Ansgar Wolsing & Thorsten Faas.", 
                       scales::number(n_responses_v34, big.mark = ".", decimal.mark = ","))
@@ -467,3 +469,71 @@ dev.off()
 ```
 
 ![](plots/treemap-haeufigste-parteien.png)
+
+#### Variante mit CDU/CSU zusammengeführt, aber sichtbar getrennt
+
+```{r treemap-haeufigste-parteien-2}
+
+# Anteile aus beiden Fragen kombinieren, Ja aus v34 ersetzen mit Antworten aus v36
+df_social_media_parties_2 <- df_antworten_v34 |> 
+  filter(v34 != "Ja") |> 
+  bind_rows(df_antworten_v36) |> 
+  transmute(
+    antwort = ifelse(!is.na(v34), v34, v36_1),
+    ja_nein_group = ifelse(!is.na(v34), "Nein", "Ja"),
+    party_group = ifelse(antwort %in% c("CDU", "CSU"), "CDU/CSU", antwort),
+    n,
+    share_adjusted = ifelse(!is.na(v34), share, share_adjusted)
+  )
+
+# Prüfen, ob die Summe der Anteil 1 ergibt
+sum(df_social_media_parties$share_adjusted)
+
+ragg::agg_png(
+  here("02-social-media", "plots", "treemap-haeufigste-parteien-cducsu.png"),
+  width = 1800, height = 1600, units = "px", res = 300)  
+df_social_media_parties_2 |> 
+  ggplot(
+    aes(
+      area = share_adjusted, subgroup = ja_nein_group, subgroup2 = party_group, 
+      subgroup3 = paste(antwort, scales::percent(share_adjusted, accuracy = 0.1, decimal.mark = ","), sep = "\n"), fill = party_group)) +
+  geom_treemap(layout = "scol") +
+  geom_treemap_subgroup_border(layout = "scol", col = "white", size = 3) +
+  geom_treemap_subgroup2_border(layout = "scol", col = "white", size = 1.6) +
+  geom_treemap_subgroup3_border(layout = "scol", col = "white", size = 1, 
+                                linetype = "dotted") +
+  geom_treemap_subgroup3_text(
+    aes(col = ifelse(antwort %in% c("FDP"), "black", "white")),
+    layout = "scol",
+    family = "Roboto Condensed SemiBold", grow = FALSE, size = 13, min.size = 3, 
+    place = "topleft", padding.x = unit(0.01, "npc"), padding.y = unit(0.02, "npc")
+    ) +
+  scale_fill_manual(values = c("Weiß nicht" = "grey58", "Alle ungefähr gleich" = "grey55", party_pal)) +
+  scale_color_identity() +
+  guides(fill = "none") +
+  labs(
+    title = "Wahrgenommene Präsenz einzelner Parteien auf sozialen Netzwerkplattformen vor der Europawahl 2024",
+    subtitle = "Verteilung der Antworten auf die Frage, ob bestimmte Parteien in den jeweils genutzten sozialen Netzwerkplattformen besonders häufig vorkamen und – falls ja – welche Parteien das waren.",
+    caption = sprintf("Daten: FES, Jugendwahlstudie zur Europawahl 2024 (n=%s Befragte zwischen<br>15 und 20 Jahren). Visualisierung: Ansgar Wolsing & Thorsten Faas.", 
+                      scales::number(n_responses_v34, big.mark = ".", decimal.mark = ","))
+  ) +
+  theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
+  theme(
+    plot.background = element_rect(color = "white", fill = "white"),
+    plot.margin = margin(t = 4, l = 6, r = 6, b = 4),
+    plot.title = element_textbox(
+      width = 1, family = "Roboto Slab", face = "bold", lineheight = 1.25),
+    plot.title.position = "plot",
+    plot.subtitle = element_textbox(
+      width = 1, family = "Roboto Slab", lineheight = 1.25),
+    plot.caption = element_markdown(
+      family = "Roboto Slab", hjust = 0, lineheight = 1.1)
+  )  
+grid.text("CSU\n0,2%", x = 0.52, y = 0.665, just = "left",
+          gp = gpar(fontfamily = "Roboto Condensed SemiBold", col = "white", 
+                    cex = 0.7, lineheight = 0.8))
+
+dev.off()
+```
+
+![](plots/treemap-haeufigste-parteien-cducsu.png)
