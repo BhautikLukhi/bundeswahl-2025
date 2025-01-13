@@ -490,7 +490,7 @@ df_social_media_parties_2 <- df_antworten_v34 |>
 sum(df_social_media_parties$share_adjusted)
 
 ragg::agg_png(
-  here("02-social-media", "plots", "treemap-haeufigste-parteien-cducsu.png"),
+  here("02-social-media", "plots", "treemap-haeufigste-parteien-variante2.png"),
   width = 1800, height = 1600, units = "px", res = 300)  
 df_social_media_parties_2 |> 
   ggplot(
@@ -536,4 +536,4 @@ grid.text("CSU\n0,2%", x = 0.52, y = 0.665, just = "left",
 dev.off()
 ```
 
-![](plots/treemap-haeufigste-parteien-cducsu.png)
+![](plots/treemap-haeufigste-parteien-variante2.png)
