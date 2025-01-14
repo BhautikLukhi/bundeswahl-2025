@@ -503,7 +503,7 @@ df_social_media_parties_2 |>
   geom_treemap_subgroup3_text(
     aes(col = ifelse(antwort %in% c("FDP"), "black", "white")),
     layout = "scol",
-    family = "Roboto Condensed SemiBold", grow = FALSE, size = 13, min.size = 3, 
+    family = "Roboto Condensed SemiBold", grow = FALSE, size = 16, min.size = 5, 
     place = "topleft", padding.x = unit(0.01, "npc"), padding.y = unit(0.02, "npc")
     ) +
   scale_fill_manual(values = c("Weiß nicht" = "grey58", "Alle ungefähr gleich" = "grey55", party_pal)) +
@@ -515,7 +515,7 @@ df_social_media_parties_2 |>
     caption = sprintf("Daten: FES, Jugendwahlstudie zur Europawahl 2024 (n=%s Befragte zwischen<br>15 und 20 Jahren). Visualisierung: Ansgar Wolsing & Thorsten Faas.", 
                       scales::number(n_responses_v34, big.mark = ".", decimal.mark = ","))
   ) +
-  theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
+  theme_minimal(base_family = "Roboto Condensed", base_size = 13) +
   theme(
     plot.background = element_rect(color = "white", fill = "white"),
     plot.margin = margin(t = 4, l = 6, r = 6, b = 4),
@@ -527,7 +527,7 @@ df_social_media_parties_2 |>
     plot.caption = element_markdown(
       family = "Roboto Slab", hjust = 0, lineheight = 1.1)
   )  
-grid.text("CSU\n0,2%", x = 0.52, y = 0.665, just = "left",
+grid.text("CSU\n0,2%", x = 0.517, y = 0.65, just = "left",
           gp = gpar(fontfamily = "Roboto Condensed SemiBold", col = "white", 
                     cex = 0.7, lineheight = 0.8))
 
