@@ -154,45 +154,6 @@ df_informationsquellen <- df |>
 
 ```{r nutzung-informationsquellen-plot-1, fig.width=7}
 
-var_labels_v31 <- df |> 
-  select(starts_with("v31_")) |> 
-  get_variable_labels() |> 
-  unlist()
-
-var_labels_v31 <- c("TV o. Mediathek", "Radio o. Audiothek", 
-                    "Gedruckte/ elektronische Zeitungen", "Beiträge im Internet",
-                    "Beiträge in sozialen Medien")
-names(var_labels_v31) <- paste0("v31_", 1:5)
-
-n_responses_v31 <- df |> 
-  select(starts_with("v31_")) |> 
-  na.omit() |> nrow()
-
-df_informationsquellen <- df |> 
-  select(starts_with("v31_")) |> 
-  na.omit() |> 
-  pivot_longer(cols = everything(), names_to = "variable", values_to = "freq") |> 
-  mutate(quelle = var_labels_v31[variable]) |> 
-  mutate(
-    quelle = factor(quelle, levels = rev(var_labels_v31)),
-    freq = as.numeric(freq) - 1,
-    freq_cat = case_when(
-      freq == 0 ~ "Nie",
-      freq <= 2 ~ "An 1-2 Tagen",
-      freq <= 5 ~ "An 3-5 Tagen",
-      freq <= 7 ~ "An 6-7 Tagen"
-    ),
-    freq_cat = factor(freq_cat, 
-                      levels = c("Nie", "An 1-2 Tagen", 
-                                 "An 3-5 Tagen", "An 6-7 Tagen"))
-  ) |> 
-  count(quelle, freq_cat) |> 
-  group_by(quelle) |> 
-  mutate(share = n / sum(n)) |> 
-  ungroup()
-
-
-
 df_informationsquellen |> 
   ggplot(aes(freq_cat, share)) +
   geom_col(
@@ -230,6 +191,63 @@ df_informationsquellen |>
     axis.text.x = element_blank()
   )
 
+```
+
+```{r nutzung-informationsquellen-plot-2, fig.width=6, fig.height=6}
+
+# Reihenfolge der Informationsquellen bestimmen
+df_informationsquellen$quelle <- factor(
+  df_informationsquellen$quelle,
+  levels = df_informationsquellen |> 
+    filter(freq_cat == "An 6-7 Tagen") |>
+    arrange(-share) |> 
+    pull(quelle) |> 
+    unname()
+)
+
+df_informationsquellen |>
+  group_by(quelle) |> 
+  arrange(desc(freq_cat)) |> 
+  mutate(label_pos_y = cumsum(lag(share, default = 0)) + share / 2) |> 
+  ungroup() |> 
+  ggplot(aes(x = 1, n, fill = freq_cat)) +
+  geom_col(
+    aes(alpha = quelle == "Beiträge in sozialen Medien"),
+    position = "fill", col = "white") + 
+  geom_text(
+    data = ~subset(. , quelle == "Beiträge in sozialen Medien"),
+    aes(y = label_pos_y, label = freq_cat),
+    family = "Roboto Condensed SemiBold", col = "white", size = 4, hjust = 0.5
+  ) +
+  scale_x_discrete(expand = expansion(mult = c(0, 0.025))) +
+  scale_y_continuous(
+    breaks = seq(0, 1, 0.2), labels = scales::label_percent()) +
+  scale_fill_manual(values = c("#1b1b3a", "grey70", "#9EC5AB", "#216869")) +
+  scale_alpha_manual(values = c(0.5, 1)) +
+  coord_flip() +
+  guides(
+    # fill = guide_legend(rev = TRUE),
+    fill = "none",
+    alpha = "none"
+  ) +
+  labs(
+     title = "Beiträge in Social Media und im Internet allgemein als<br>
+                     wichtige politische Informationsquelle für junge Menschen",
+    subtitle = "Nutzungshäufigkeit verschiedener Informationsquellen über den<br>
+    Wahlkampf und die Parteien zur Europawahl",
+    caption = sprintf(
+      "Daten: FES, Jugendwahlstudie zur Europawahl 2024 (%s Befragte zwischen 15 und 20<br>
+      Jahren). Visualisierung: Ansgar Wolsing & Thorsten Faas.", 
+      scales::number(n_responses_v31, big.mark = ".")),
+    x = NULL, y = NULL, fill = NULL
+  ) +
+  facet_wrap(vars(quelle), ncol = 1, scales = "free_x") +
+  theme(
+    legend.position = "top",
+    legend.justification = "left",
+    panel.grid = element_blank(),
+    strip.text = element_text(family = "Roboto Condensed SemiBold", size = 10, hjust = 0)
+  )
 ```
 
 ### Inhalte mit Politikbezug in Sozialen Medien
