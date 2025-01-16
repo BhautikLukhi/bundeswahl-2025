@@ -178,7 +178,7 @@ df_informationsquellen |>
     title = sprintf("Beiträge in <span style='color: %s'>Social Media und Internet</span> als wichtige politische<br>Informationsquelle für junge Menschen", color_pal[3]),
     subtitle = "Nutzungshäufigkeit verschiedener Informationsquellen über den Wahlkampf und<br>die Parteien zur Europawahl",
     caption = sprintf(
-      "Daten: FES, Jugendwahlstudie zur Europawahl 2024 (%s Befragte zwischen 15 und 20 Jahren).<br>Visualisierung: Ansgar Wolsing & Thorsten Faas.", 
+      "Daten: Jugendwahlstudie zur Europawahl 2024 (%s Befragte zwischen 15 und 20 Jahren).<br>Visualisierung: Ansgar Wolsing & Thorsten Faas.", 
       scales::number(n_responses_v31, big.mark = ".")),
     x = NULL, 
     y = NULL
@@ -236,7 +236,7 @@ df_informationsquellen |>
     subtitle = "Nutzungshäufigkeit verschiedener Informationsquellen über den<br>
     Wahlkampf und die Parteien zur Europawahl",
     caption = sprintf(
-      "Daten: FES, Jugendwahlstudie zur Europawahl 2024 (%s Befragte zwischen 15 und 20<br>
+      "Daten: Jugendwahlstudie zur Europawahl 2024 (%s Befragte zwischen 15 und 20<br>
       Jahren). Visualisierung: Ansgar Wolsing & Thorsten Faas.", 
       scales::number(n_responses_v31, big.mark = ".")),
     x = NULL, y = NULL, fill = NULL
