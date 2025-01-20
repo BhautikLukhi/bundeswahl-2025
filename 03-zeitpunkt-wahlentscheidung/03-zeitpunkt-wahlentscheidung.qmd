@@ -1,0 +1,312 @@
+---
+title: "03 Zeitpunkt der Wahlentscheidung"
+format:
+  html:
+    code-fold: true
+    message: false
+    warning: false
+---
+
+```{r setup}
+library(tidyverse)
+library(ggtext)
+library(haven)
+library(labelled)
+library(gt)
+library(gtsummary)
+library(here)
+
+knitr::opts_chunk$set(dev = "ragg_png")
+
+source(here("R", "custom-theme.R"))
+theme_set(theme_custom())
+```
+
+## Daten
+
+### Daten laden
+
+```{r load-data, cache=TRUE}
+
+df_2009_2017 <- read_dta(here("data", "RCS", "ZA6834_v1-0-0.dta"))
+df_2021 <- read_dta(here("data", "RCS", "ZA7703_v2-0-0.dta"))
+```
+
+### Vorwahl
+
+#### Variablen Kumulation 2009-2017
+
+![](images/clipboard-2248189057.png){width="400"}
+
+Die Variable `year` ermöglicht die Unterscheidung der Studien.
+
+```{r v-explore-kumul}
+
+df_2009_2017 |>
+  select(year, pre0401, pre0403a, pre0403b) |>
+  mutate(across(c(pre0401, pre0403a, pre0403b),
+                function(x) to_factor(x, levels = "prefixed", drop_unused_labels = TRUE))) |>
+  tbl_summary(by = year)
+
+```
+
+##### Codierung von Weiß nicht-Wahlabsicht
+
+-   Zweitstimme für die Wahlabsicht verwendet (98 Weiß nicht)
+-   Weiß nicht bei Wahlbeteiligung ausgeschlossen
+-   Wahlbeteiligung (sehr) unwahrscheinlich = entschlossen
+
+```{r v-recode-wahlabsicht-2009-2017}
+df_wahlabsicht_2009_2017 <- df_2009_2017 |> 
+  # select(year, pre0401, pre0403a, pre0403b) |> 
+  # Weiß nicht bei Wbt ausgeschlossen (wenige Fälle)
+  filter(pre0401 != -99, 
+         # pre0401 %in% c(1:3, 6), # Wbt 4,5 auch entschieden --> in mutate berücksichtigen
+         pre0403b != -99, pre0403b != -99, 
+         # pre0403b != -97, pre0403b != -97   # entsprechend auch TNZ hier behalten
+         ) |> 
+  mutate(
+    unentschlossen = pre0403a == -98 | pre0403b == -98,
+    # (Wahrscheinliche) Nichtwahl --> entschieden
+    unentschlossen = ifelse(pre0401 %in% 4:5, FALSE, unentschlossen),
+    # Bei Briefwahl 
+    unentschlossen = ifelse(pre0401 == 6, FALSE, unentschlossen),
+    year = factor(year)) |>
+  mutate(days_to_election = max(pre_feldtag) + 1  - pre_feldtag, .by = year) |> 
+  select(year, pre_feldtag, days_to_election, unentschlossen, pre0403a, pre0403b, 
+         w_bil1t # Bildungsgewicht mit Transformationsgewicht (Tag)
+         )
+df_wahlabsicht_2009_2017
+```
+
+##### Auszählung Weiß nicht-Wahlabsicht je BTW
+
+```{r}
+df_wahlabsicht_2009_2017 |> 
+  count(year, unentschlossen) |> 
+  pivot_wider(id_cols = "year", names_from = "unentschlossen", values_from = "n") |> 
+  knitr::kable()
+```
+
+#### Variablen 2021
+
+-   Wahlbeteiligung: pre005
+-   Wahlabsicht Zweitstimme: pre006
+-   pre008 (Wahlentscheidung: vor Wahltermin, BTW 2021, Zweitstimme) außen vor lassen, hier bedeutet "-98 Weiß nicht" nicht, dass man unentschlossen ist.
+
+```{r v-explore-2021}
+
+df_2021 |>
+  select(pre005, pre006ba, pre006bb) |>
+  mutate(across(c(pre005, pre006ba, pre006bb),
+                function(x) to_factor(x, levels = "prefixed", drop_unused_labels = TRUE))) |>
+  tbl_summary()
+
+```
+
+##### Codierung von Weiß nicht-Wahlabsicht
+
+```{r v-codierung-unentschlossene}
+df_wahlabsicht_2021 <- df_2021 |> 
+  # Weiß nicht bei Wbt ausgeschlossen (wenige Fälle)
+  filter(
+    # pre005 %in% c(1:3, 6), # ohnehin durch die Filterführung gegeben
+    pre006ba != -99, pre006bb != -99, 
+    # pre006ba != -97, pre006bb != -97
+    ) |> 
+  mutate(
+    unentschlossen = pre006ba == -98 | pre006bb == -98,
+    # (Wahrscheinliche) Nichtwahl --> entschieden
+    unentschlossen = ifelse(pre005 %in% 4:5, FALSE, unentschlossen),
+     # Bei Briefwahl
+    unentschlossen = ifelse(pre005 == 6, FALSE, unentschlossen),
+    year = factor(2021)) |>
+  mutate(days_to_election = max(pre_feldtag) + 1  - pre_feldtag) |> 
+  select(year, pre_feldtag, days_to_election, unentschlossen, pre006ba, pre006bb, 
+         w_bil1t # Bildungsgewicht mit Transformationsgewicht (Tag)
+         )
+df_wahlabsicht_2021
+```
+
+##### Auszählung Weiß nicht-Wahlabsicht
+
+```{r v-count-unentschlossene}
+df_wahlabsicht_2021 |> 
+  count(year, unentschlossen) |> 
+  pivot_wider(id_cols = "year", names_from = "unentschlossen", values_from = "n") |> 
+  knitr::kable()
+```
+
+##### Kontrolle
+
+```{r}
+df_2021 |> 
+  select(pre006ba) |>
+  filter(pre006ba != -99 & pre006ba != -97) |> 
+  count(pre006ba) |> 
+  mutate(share = n / sum(n)) |> 
+  gt()
+```
+
+#### Datensätze kombinieren
+
+```{r v-daten-kombinieren}
+df_wahlabsicht_kombi <- df_wahlabsicht_2009_2017 |> 
+  select(year, pre_feldtag, days_to_election, unentschlossen, w_bil1t) |> 
+  bind_rows(select(df_wahlabsicht_2021, year, pre_feldtag, days_to_election, unentschlossen, w_bil1t)) |> 
+  # year erneut als Factor
+  mutate(year = factor(year))
+
+```
+
+#### Datenvisualisierungen
+
+```{r v-plot-verlauf-dk-ungewichtet}
+df_wahlabsicht_kombi |>
+  # die ersten 5 Feldtage ausschließen, schreiben RSB/TF/AW 2010 ;-)
+  filter(pre_feldtag > 5) |> 
+  # damit alle Studien mit dem selben Abstand zur Wahl starten
+  # filter(days_to_election <= 50) |>  # wegen Glättung erst im Plot ausschließen
+  count(year, days_to_election, unentschlossen) |> 
+  mutate(share = n / sum(n), .by = c(year, days_to_election)) |> 
+  filter(unentschlossen) |> 
+  ggplot(aes(days_to_election, share, color = year)) +
+  geom_smooth(method = "loess", span = 0.5, fill = NA) +
+  scale_x_reverse(
+    breaks = seq(70, 7, -7), labels = function(x) sprintf("%d", x / 7),
+    expand = expansion(add = 0)) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  scale_color_manual(values = color_pal[c(5, 3, 4, 1)]) +
+  coord_cartesian(xlim = c(50, 1), ylim = c(0, NA)) +
+  labs(
+    title = "Anteil Unentschlossener",
+    subtitle = "Ungewichtet, Lowess bw = 0.6",
+    x = "Wochen bis zur Wahl"
+  ) +
+  theme(panel.grid.minor.x = element_blank())
+  
+```
+
+```{r v-plot-verlauf-dk-gewichtet, fig.width=5, fig.height=4}
+df_wahlabsicht_kombi |>
+  # die ersten 5 Feldtage ausschließen, schreiben RSB/TF/AW 2010 ;-)
+  filter(pre_feldtag > 5) |> 
+  # damit alle Studien mit dem selben Abstand zur Wahl starten
+  # filter(days_to_election <= 50) |>  # wegen Glättung erst im Plot ausschließen
+  count(year, days_to_election, unentschlossen, wt = w_bil1t) |> 
+  mutate(share = n / sum(n), .by = c(year, days_to_election)) |> 
+  filter(unentschlossen) |> 
+  ggplot(aes(days_to_election, share, color = year)) +
+  geom_smooth(method = "loess", span = 0.5, se = FALSE) +
+  geom_text(
+    data = data.frame(
+      x = c(rep(0.5, 3), 2 * 7),
+      y = c(0.11, 0.14, 0.16, 0.25),
+      year = factor(c(2017, 2009, 2013, 2021))
+    ),
+    aes(x, y, label = year, color = year),
+    family = "Roboto Condensed SemiBold", size = 4, hjust = 0
+  ) +
+  scale_x_reverse(
+    breaks = seq(70, 7, -7), labels = function(x) sprintf("%d", x / 7),
+    expand = expansion(add = 0)) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  scale_color_manual(values = color_pal[c(5, 3, 4, 1)]) +
+  coord_cartesian(xlim = c(50, -3), ylim = c(0, NA)) +
+  guides(color = "none") +
+  labs(
+    title = "Anteil Unentschlossener im Laufe des Wahlkampfs",
+    subtitle = "Gewichtete und geglättete tageweise Anteile bei den<br>
+    Bundestagswahlen 2009-2021",
+    caption = "Daten: German Longitudinal Election Study 2009-2021.<br>
+    Visualisierung: Ansgar Wolsing & Thorsten Faas",
+    x = "Anzahl Wochen bis zur Wahl", y = NULL
+  ) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    axis.ticks.x = element_line(linewidth = 0.1),
+    plot.margin = margin(t = 4, r = 4, b = 4, l = 4))
+```
+
+#### Vergleich
+
+##### 2009
+
+Schmitt-Beck et al. (2010)
+
+![](images/clipboard-158796502.png){width="500"}
+
+##### 2013
+
+Partheymüller et al. (2013)
+
+![](images/clipboard-2222058571.png){width="500"}
+
+### Nachwahl
+
+Zeitpunkt der Wahlentscheidung
+
+Auch den Zeitpunkt der Entscheidung zur Nichtwahl berücksichtigen.
+
+#### 2009-2017
+
+```{r}
+df_2009_2017 |> 
+  transmute(across(c(pos0301, pos0305, pos0309), 
+                function(x) to_factor(x, levels = "prefixed", drop_unused_labels = TRUE))) |> 
+  tbl_summary(by = pos0301)
+
+```
+
+```{r}
+df_2009_2017 |> 
+  transmute(across(c(pos0302, pos0305), 
+                function(x) to_factor(x, levels = "prefixed", drop_unused_labels = TRUE))) |> 
+  tbl_summary(by = pos0302)
+
+```
+
+```{r}
+df_2009_2017 |> 
+  filter(pos0301 == 1, pos0305 > 0) |> 
+  transmute(year, across(c(pos0305), 
+                function(x) to_factor(x, levels = "prefixed", drop_unused_labels = TRUE))) |> 
+  tbl_summary(by = year)
+
+```
+
+#### 2021
+
+```{r}
+df_2021 |> 
+  mutate(
+    across(c(pos003, pos005), to_factor, levels = "prefixed")) |> 
+  tbl_cross(pos005, pos003)
+
+```
+
+```{r}
+df_2021 |> 
+  filter(pos005 > 0) |> 
+  transmute(pos005 = to_factor(pos005, levels = "prefixed", drop_unused_labels = TRUE)) |> 
+  tbl_summary(statistic = list(all_categorical() ~ "{n} ({p}%)"))
+
+```
+
+Nichtwähler
+
+```{r}
+df_2021 |> 
+  transmute(pos007 = to_factor(pos007, levels = "prefixed", drop_unused_labels = TRUE)) |> 
+  tbl_summary(statistic = list(all_categorical() ~ "{n} ({p}%)"))
+
+
+```
+
+```{r}
+df_2021 |> 
+  transmute(pos002 = to_factor(pos002, levels = "prefixed", drop_unused_labels = TRUE)) |> 
+  tbl_summary(statistic = list(all_categorical() ~ "{n} ({p}%)"))
+
+```
