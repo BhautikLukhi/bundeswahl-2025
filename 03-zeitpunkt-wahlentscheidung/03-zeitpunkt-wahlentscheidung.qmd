@@ -259,20 +259,29 @@ df_2009_2017 |>
 
 ```
 
-```{r}
-df_2009_2017 |> 
-  transmute(across(c(pos0302, pos0305), 
-                function(x) to_factor(x, levels = "prefixed", drop_unused_labels = TRUE))) |> 
-  tbl_summary(by = pos0302)
+Zeitpunkt der Entscheidung für Wähler und Nichtwähler kombinieren
 
+```{r}
+df_pos_zeitpunkt_2009_2017 <- df_2009_2017 |> 
+  filter(pos0301 > 0) |> 
+  transmute(
+    year,
+    w_panel2,
+    # across(c(pos0305, pos0309), 
+    #             function(x) to_factor(x, levels = "prefixed", drop_unused_labels = TRUE)),
+    zeitpunkt = case_when(
+      pos0301 == 1 ~ pos0305,
+      pos0301 == 2 ~ pos0309)
+    ) |> 
+  filter(zeitpunkt > 0 & zeitpunkt != 6) |> 
+  mutate(zeitpunkt = to_factor(zeitpunkt, levels = "prefixed", drop_unused_labels = TRUE))
+df_pos_zeitpunkt_2009_2017
 ```
 
 ```{r}
-df_2009_2017 |> 
-  filter(pos0301 == 1, pos0305 > 0) |> 
-  transmute(year, across(c(pos0305), 
-                function(x) to_factor(x, levels = "prefixed", drop_unused_labels = TRUE))) |> 
-  tbl_summary(by = year)
+df_pos_zeitpunkt_2009_2017 |> 
+  select(year, zeitpunkt) |> 
+  tbl_summary(by = "year")
 
 ```
 
@@ -280,33 +289,78 @@ df_2009_2017 |>
 
 ```{r}
 df_2021 |> 
+  transmute(
+    across(c(pos002, pos003, pos005, pos007), to_factor, levels = "prefixed")) |> 
+  tbl_summary()
+
+```
+
+```{r}
+df_pos_zeitpunkt_2021 <- df_2021 |> 
+  filter(pos002 > 0) |> 
+  select(w_panel2, pos002, pos003, pos004ba, pos004bb, pos005, pos007) |> 
+  transmute(
+    year = 2021,
+    w_panel2,
+    zeitpunkt = case_when(
+      # Nichtwähler
+      pos002 == 2 | pos004ba == -85 | pos004bb == -85 ~  pos007,
+      # Wähler
+      TRUE ~ pos005
+    )) |> 
+  filter(zeitpunkt > 0 & zeitpunkt != 6) |> 
   mutate(
-    across(c(pos003, pos005), to_factor, levels = "prefixed")) |> 
-  tbl_cross(pos005, pos003)
-
+    zeitpunkt = to_factor(zeitpunkt, levels = "prefixed", drop_unused_labels = TRUE)
+  )
+df_pos_zeitpunkt_2021
 ```
 
 ```{r}
-df_2021 |> 
-  filter(pos005 > 0) |> 
-  transmute(pos005 = to_factor(pos005, levels = "prefixed", drop_unused_labels = TRUE)) |> 
-  tbl_summary(statistic = list(all_categorical() ~ "{n} ({p}%)"))
+df_pos_zeitpunkt_2021 |> 
+  select(zeitpunkt) |> 
+  tbl_summary()
 
 ```
 
-Nichtwähler
+#### Datensätze kombinieren
 
 ```{r}
-df_2021 |> 
-  transmute(pos007 = to_factor(pos007, levels = "prefixed", drop_unused_labels = TRUE)) |> 
-  tbl_summary(statistic = list(all_categorical() ~ "{n} ({p}%)"))
-
-
+df_pos_zeitpunkt_kombi <- df_pos_zeitpunkt_2009_2017 |> 
+  bind_rows(df_pos_zeitpunkt_2021)
 ```
+
+Gewichtet (Panelgewicht w_panel2):
 
 ```{r}
-df_2021 |> 
-  transmute(pos002 = to_factor(pos002, levels = "prefixed", drop_unused_labels = TRUE)) |> 
-  tbl_summary(statistic = list(all_categorical() ~ "{n} ({p}%)"))
-
+df_pos_zeitpunkt_kombi |> 
+  count(year, zeitpunkt, wt = w_panel2) |> 
+  mutate(share = n / sum(n), .by = year) |> 
+  mutate(share_fmt = scales::percent(share, accuracy = 0.1)) |> 
+  pivot_wider(id_cols = zeitpunkt, names_from = "year", values_from = share_fmt) |> 
+  gt()
 ```
+
+Seit langem / seit ein paar Monaten:
+
+2009: 56,9 %\
+2013: 60,4 %\
+2017: 57,3 %\
+2021: 56,2 %
+
+Ungewichtet:
+
+```{r}
+df_pos_zeitpunkt_kombi |> 
+  count(year, zeitpunkt) |> 
+  mutate(share = n / sum(n), .by = year) |> 
+  mutate(share_fmt = scales::percent(share, accuracy = 0.1)) |> 
+  pivot_wider(id_cols = zeitpunkt, names_from = "year", values_from = share_fmt) |> 
+  gt()
+```
+
+Seit langem / seit ein paar Monaten:
+
+2009: 58,0 %\
+2013: 61,6 %\
+2017: 59,0 %\
+2021: 57,5 %
