@@ -1,7 +1,7 @@
 library(ggplot2)
 library(ggtext)
 
-theme_custom <- function(base_size = 12, ...) {
+theme_custom <- function(base_size = 13, ...) {
   theme_minimal(base_family = "Roboto Condensed", base_size = base_size) +
     theme(
       plot.background = element_rect(color = "white", fill = "white"),
@@ -9,10 +9,10 @@ theme_custom <- function(base_size = 12, ...) {
       plot.title = element_markdown(
         family = "Roboto Slab", face = "bold", lineheight = 1.25),
       plot.title.position = "plot",
-      plot.subtitle = element_markdown(
-        family = "Roboto Slab", lineheight = 1.25),
-      plot.caption = element_markdown(
-        family = "Roboto Slab", hjust = 0, lineheight = 1.1)
+      plot.subtitle = element_textbox(
+        family = "Roboto Slab", lineheight = 1.25, width = 1),
+      plot.caption = element_textbox(
+        family = "Roboto Slab", hjust = 0, lineheight = 1.1, width = 1)
     )  
 }
 
