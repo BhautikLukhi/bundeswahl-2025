@@ -1,0 +1,406 @@
+---
+title: "04 Koalitionen"
+format:
+  html:
+    code-fold: true
+    message: false
+    warning: false
+---
+
+```{r setup}
+library(tidyverse)
+library(ggtext)
+library(readxl)
+library(gt)
+library(gtsummary)
+library(here)
+
+knitr::opts_chunk$set(dev = "ragg_png")
+
+source(here("R", "custom-theme.R"))
+theme_set(theme_custom())
+```
+
+## Daten
+
+### Daten laden und aufbereiten
+
+#### Zusammensetzung Bundesrat
+
+```{r load-data}
+df_bundesrat <- read_xlsx(here("data", "BRZusammensetzung_Jan25.xlsx"), sheet = 1,
+                .name_repair = janitor::make_clean_names)
+df_bundesrat <- filter(df_bundesrat, zusammensetzung != "SUMME")
+```
+
+#### Stimmen Bundesländer im Bundesrat
+
+<https://www.bundesrat.de/DE/bundesrat/verteilung/verteilung.html>
+
+```{r data-stimmen-bundeslaender}
+stimmen <- c(
+  "Baden-Württemberg"      = 6,
+  "Bayern"                 = 6,
+  "Berlin"                 = 4,
+  "Brandenburg"            = 4,
+  "Bremen"                 = 3,
+  "Hamburg"                = 3,
+  "Hessen"                 = 5,
+  "Mecklenburg-Vorpommern" = 3,
+  "Niedersachsen"          = 6,
+  "Nordrhein-Westfalen"    = 6,
+  "Rheinland-Pfalz"        = 4,
+  "Saarland"               = 3,
+  "Sachsen"                = 4,
+  "Sachsen-Anhalt"         = 4,
+  "Schleswig-Holstein"     = 4,
+  "Thüringen"              = 4
+)
+
+# Probe: 69 Stimmen
+sum(stimmen)
+
+```
+
+#### Bundesregierungen
+
+```{r data-bundesregierungen}
+df_bundesregierungen <- read_tsv(here("data", "bundesregierungen.tsv"))
+
+```
+
+```{r daten-vorbereiten}
+
+keep_cols <- c("zusammensetzung", "start", "ende", "wochen_gerundet",
+               "bw", "bay", "ber", "bra", "bre", "hh", "hes", "mc_vp", "nds", "nrw", "rlp",
+               "saar", "sachsen", "sa_a", "sh", "thu")
+bundesland_cols <- names(stimmen)
+
+df_bundesrat <- df_bundesrat[, keep_cols]
+colnames(df_bundesrat) <- c("bundesrat_zusammensetzung", "bundesrat_start", "bundesrat_ende",
+                            "bundesrat_wochen", bundesland_cols)
+colnames(df_bundesrat)
+
+df_bundesrat <- df_bundesrat |> 
+  mutate(bundesrat_zusammensetzung = as.integer(bundesrat_zusammensetzung))
+
+df_bundesrat_long <- df_bundesrat |> 
+  filter(bundesrat_zusammensetzung != "SUMME")  |> 
+  pivot_longer(cols = all_of(bundesland_cols), names_to = "bundesland", values_to = "land_koalition") 
+```
+
+Bundesrats- und Bundesregierungs-Timelines zusammenführen und Überlappung zwischen Bund und Land ermitteln
+
+```{r}
+# Cross Join + anschließend überlappende Zeitintervalle behalten
+df_bundesrat_bundesregierung <- df_bundesrat_long |> 
+  cross_join(df_bundesregierungen) |> 
+  filter(
+    (bund_start >= bundesrat_start & bund_start <= bundesrat_ende) |
+      (bund_ende >= bundesrat_start & bund_ende <= bundesrat_ende) |
+      (bundesrat_start >= bund_start & bundesrat_ende <= bund_ende)
+  ) |> 
+  # count(year(bundesrat_start), year(bundesrat_ende), bundesrat_zusammensetzung) |> View()
+  arrange(bundesrat_start, bund_start, bundesland) |> 
+  mutate(
+    # Stimmen der Bundesländer hinzufügen
+    stimmen = stimmen[bundesland],
+    # CDU/CSU als Union codieren
+    across(c(land_koalition, bund_koalition), 
+           function(x) str_replace(x, "(CDU, CSU|CDU|CSU)", "Union"))
+  ) |> 
+  rowwise() %>%
+  mutate(
+    land_parteien = str_split(land_koalition, "/"),
+    bund_parteien = str_split(bund_koalition, ", "),
+    # Koalitionen in Bund und Land gleich
+    koalition_gleich = setequal(land_parteien, bund_parteien),
+    # Alleinregierung einer der Koalitionsparteien im Bund
+    koalition_allein = length(land_parteien) == 1 && land_parteien %in% bund_parteien,
+    # 2 aus 3 Parteien im Bund regieren im Land
+    koalition_2aus3 = if (length(bund_parteien) >= 3) {
+      combn(bund_parteien, 2, simplify = FALSE) %>% 
+        map_lgl(function(x) all(x %in% land_parteien)) %>% 
+        any()
+    } else { FALSE }
+  ) %>%
+  ungroup() |> 
+  mutate(koalition_gleich_oder_alleinreg = koalition_gleich | koalition_allein)
+```
+
+Auszählung der Anteile der Stimmen
+
+```{r}
+df_uebereinstimmungen <- df_bundesrat_bundesregierung |> 
+  mutate(datum_wechsel = if_else(bundesrat_start > bund_start, bundesrat_start, bund_start)) |>
+  select(datum_wechsel, everything()) |> 
+  group_by(datum_wechsel, bund_koalition) |> 
+  summarize(
+    n_stimmen_uebereinstimmung = sum(koalition_gleich_oder_alleinreg * stimmen),
+    anteil_stimmen_uebereinstimmung = n_stimmen_uebereinstimmung / sum(stimmen),
+    .groups = "drop")
+df_uebereinstimmungen
+```
+
+```{r plot-stimmen-bundesrat, fig.width=6.5, fig.height=4.5}
+
+# Koalitionen Bundesregierung
+df_annotation_bundesregierung <- df_bundesrat_bundesregierung |> 
+  distinct(bund_koalition, bund_start) |> 
+  arrange(bund_start) |> 
+  # Mehrere Legislaturperioden zusammenfassen
+  mutate(neue_koalition = bund_koalition != lag(bund_koalition, n = 1, default = "")) |> 
+  filter(neue_koalition, year(bund_start) >= 1998) |> 
+  mutate(
+    bund_start = as_datetime(bund_start),
+    bund_ende = lead(bund_start, n = 1, default = today())
+  )
+
+df_uebereinstimmungen |> 
+  ggplot(aes(datum_wechsel, anteil_stimmen_uebereinstimmung)) +
+  # Markierung Bundesregierungen
+  # geom_segment(
+  #   data = df_annotation_bundesregierung,
+  #   aes(x = as_datetime(bund_start), xend = as_datetime(bund_start), y = 0.65, yend = 1),
+  #   inherit.aes = FALSE,
+  #   color = color_pal[1], linetype = "dotted"
+  # ) +
+  geom_rect(
+    data = df_annotation_bundesregierung |> 
+      mutate(fill = factor(row_number() %% 2)),
+    aes(xmin = bund_start, xmax = bund_ende,
+        ymin = 0, ymax = Inf, fill = fill),
+    inherit.aes = FALSE, show.legend = FALSE
+  ) +
+  geom_text(
+    data = df_annotation_bundesregierung,
+    aes(x = as_datetime(bund_start),
+        y = 0.98, label = str_wrap(bund_koalition, 5)),
+    inherit.aes = FALSE,
+    color = "grey30", size = 3.5, hjust = 0, vjust = 1, nudge_x = 100 * 86400,
+    family = "Roboto Condensed SemiBold", lineheight = 0.8
+  ) +
+  geom_hline(aes(yintercept = 0.5), linewidth = 1, linetype = "solid", color = color_pal[3]) +
+  geom_rect(
+    aes(xmin = datum_wechsel, xmax = lead(datum_wechsel, n = 1, default = today()),
+        ymin = 0, ymax = pmin(0.5, anteil_stimmen_uebereinstimmung)
+        ),
+    fill = color_pal[2], alpha = 0.8
+  ) +
+  geom_rect(
+    aes(xmin = datum_wechsel, xmax = lead(datum_wechsel, n = 1, default = today()),
+        ymin = 0.5, ymax = pmax(0.5, anteil_stimmen_uebereinstimmung)),
+    fill = color_pal[3], alpha = 0.8
+  ) +
+  geom_step(color = "grey30", linewidth = 0.1) +
+  scale_x_datetime(
+    date_breaks = "4 years", date_labels = "%Y",
+    expand = expansion(mult = c(0, 0.02))) +
+  scale_y_continuous(
+    breaks = seq(0, 1, 0.1), 
+    labels = function(x) ifelse(x == 0.5, "<b style='color:#c17dfa'>50%</b>", scales::percent(x)),
+    expand = expansion(mult = 0)) +
+  scale_fill_manual(values = c("transparent", "#D9D9D933")) +
+  coord_cartesian(ylim = c(0, 1), clip = "off") +
+  labs(
+    title = "",
+    caption = "Kriterium: Koalition auf Landesebene stimmt mit Bund überein oder  Alleinregierung eines der Partner im Bund",
+    x = NULL, y = "Anteil der Stimmen (%)"
+  ) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x = element_text(family = "Roboto Condensed SemiBold"),
+    axis.text.y = element_markdown(),
+    plot.margin = margin(t = 4, r = 28, b = 4, l = 4),
+    panel.grid.minor.y = element_blank()
+  )
+```
+
+### Anzahl der verschiedenen Koalitionskonstellationen
+
+Wichtig: Die Parteien, die eine Koalition bilden, werden alphabetisch sortiert, damit bspw. SPD/Linke/Grüne und SPD/Grüne/Linke als gleiche Konstellation gewertet wird.
+
+```{r}
+df_bundesrat_long |> 
+  mutate(
+    land_parteien = str_split(land_koalition, "/"),
+    land_parteien_sortiert = map(land_parteien, sort),
+    land_koalition_sortiert = map(land_parteien_sortiert, paste, collapse = ",")) |> 
+  group_by(bundesrat_start) |> 
+  summarize(n_verschiedene_koalitionen = n_distinct(land_koalition_sortiert)) |> 
+  ggplot(aes(bundesrat_start, n_verschiedene_koalitionen)) +
+  geom_rect(
+    aes(xmin = bundesrat_start, xmax = lead(bundesrat_start, n = 1, default = today()),
+        ymin = 0, ymax = n_verschiedene_koalitionen
+        ),
+    fill = color_pal[2], alpha = 0.1
+  ) +
+  geom_step(color  = color_pal[2]) +
+  scale_x_datetime(date_breaks = "4 years", date_labels = "%Y") +
+  scale_y_continuous() +
+  coord_cartesian(ylim = c(1, 16)) +
+  labs(
+    title = "Anzahl der verschiedenen Koalitionskonstellationen in den Ländern",
+    subtitle = "Gezählt werden die unterschiedlichen Kombinationen von Parteien **ohne 
+    <br>Berücksichtigung der Reihenfolge**, d.h. SPD/CDU und CDU/SPD werden als **eine <br>Konstellation** gezählt."
+  )
+```
+
+Sofern die Reihenfolge der Parteien die Größenverhältnisse im Parlament wiederspiegeln, könnten auch die unsortierten Parteienkonstellationen gezählt werden.
+
+```{r}
+df_bundesrat_long |> 
+  group_by(bundesrat_start) |> 
+  summarize(n_verschiedene_koalitionen = n_distinct(land_koalition)) |> 
+  ggplot(aes(bundesrat_start, n_verschiedene_koalitionen)) +
+  geom_rect(
+    aes(xmin = bundesrat_start, xmax = lead(bundesrat_start, n = 1, default = today()),
+        ymin = 0, ymax = n_verschiedene_koalitionen
+        ),
+    fill = color_pal[2], alpha = 0.1
+  ) +
+  geom_step(color  = color_pal[2]) +
+  scale_x_datetime(date_breaks = "4 years", date_labels = "%Y") +
+  scale_y_continuous() +
+  coord_cartesian(ylim = c(1, 16)) +
+  labs(
+    title = "Anzahl der verschiedenen Koalitionskonstellationen in den Ländern",
+    subtitle = "Gezählt werden die unterschiedlichen Kombinationen von Parteien **unter 
+    <br>Berücksichtigung der Reihenfolge**, d.h. SPD/CDU und CDU/SPD werden als<br>**verschiedene Konstellationen** gezählt."
+  )
+```
+
+Man könnte ggf. differenzieren: es macht einen Unterschied, welche Partei den MP stellt (BaWü vs. NRW), aber bei Dreierkoalitionen berücksichtigen wir die Reihenfolge an Position 2 und 3 nicht. Also:\
+SPD/Grüne/Linke =  SPD/Linke/Grüne, aber\
+SPD/CDU/Grüne ungleich CDU/SPD/Grüne.
+
+```{r}
+df_bundesrat_koalition_sortiert_long <- df_bundesrat_long |> 
+  mutate(
+    land_parteien = str_split(land_koalition, "/"),
+    land_parteien_anzahl = map_int(land_parteien, length),
+    land_partei_1 = map_chr(land_parteien, pluck, 1),
+    land_partei_weitere = map2(land_parteien, land_partei_1, setdiff),
+    land_parteien_weitere_sortiert = map(land_partei_weitere, sort),
+    land_koalition_sortiert = map2_chr(
+      land_partei_1, land_parteien_weitere_sortiert, 
+      function(x, y) unlist(paste(x, paste(y, collapse = " "), collapse = " ")))
+    ) |> 
+  select(-c(land_parteien, land_partei_1, land_partei_weitere, land_parteien_weitere_sortiert))
+```
+
+```{r}
+df_bundesrat_koalition_sortiert_long |> 
+  group_by(bundesrat_start) |> 
+  summarize(n_verschiedene_koalitionen = n_distinct(land_koalition_sortiert)) |> 
+  ggplot(aes(bundesrat_start, n_verschiedene_koalitionen)) +
+  geom_rect(
+    aes(xmin = bundesrat_start, xmax = lead(bundesrat_start, n = 1, default = today()),
+        ymin = 0, ymax = n_verschiedene_koalitionen
+        ),
+    fill = color_pal[2], alpha = 0.1
+  ) +
+  geom_step(color  = color_pal[2]) +
+  scale_x_datetime(date_breaks = "4 years", date_labels = "%Y") +
+  scale_y_continuous() +
+  coord_cartesian(ylim = c(1, 16)) +
+  labs(
+    title = "Anzahl der verschiedenen Koalitionskonstellationen in den Ländern",
+    subtitle = "Gezählt werden die unterschiedlichen Kombinationen von Parteien **unter 
+    Berücksichtigung** der Partei des/der Ministerpräsidenten/-in, d.h. SPD/CDU und CDU/SPD werden als **verschiedene Konstellationen**, aber SPD/Grüne/Linke und SPD/Linke/Grüne als eine Konstellation gezählt."
+  )
+```
+
+#### Inkl. Anzahl der Parteien in den Koalitionen
+
+```{r plot-unterschiedliche-koalitionen-mit-zahl-parteien, fig.width = 6.75, fig.height=4.75}
+df_bundesrat_koalition_sortiert_long |> 
+  mutate(land_parteien_anzahl = factor(land_parteien_anzahl)) |> 
+  group_by(bundesrat_start, land_parteien_anzahl) |> 
+  summarize(n_verschiedene_koalitionen = n_distinct(land_koalition_sortiert),
+            .groups = "drop_last") |> 
+  mutate(
+    n_verschiedene_koalitionen_cumul = cumsum(n_verschiedene_koalitionen),
+    n_verschiedene_koalitionen_cumul_lag = lag(n_verschiedene_koalitionen_cumul, 1, 
+                                               default = 0)) |> 
+  ungroup() |> 
+  nest(data = -c(bundesrat_start)) |> 
+  mutate(
+    bundesrat_ende = lead(bundesrat_start, n = 1, default = today())) |> 
+  unnest(cols = data) |> 
+  ggplot(aes(fill = land_parteien_anzahl)) +
+  geom_rect(
+    aes(xmin = bundesrat_start, xmax = bundesrat_ende,
+        ymin = n_verschiedene_koalitionen_cumul_lag, 
+        ymax = n_verschiedene_koalitionen_cumul)
+  ) +
+  annotate(
+    "text",
+    x = as_datetime(c("1997-01-01", "1997-01-01", "2018-01-01")),
+    y = c(1.3, 6, 11),
+    label = c("Alleinregierungen", "Zweierbündnisse", "Dreierbündnisse"),
+    family = "Roboto Condensed SemiBold", size = 5, hjust = 0, vjust = 0.5, color = "white"
+  ) +
+  scale_x_datetime(date_breaks = "2 years", date_labels = "%Y") +
+  scale_y_continuous() +
+  scale_fill_manual(values = color_pal) +
+  coord_cartesian(ylim = c(0, 16), expand = FALSE) +
+  labs(
+    title = "Anzahl unterschiedlicher Koalitionen in den 16 Bundesländern",
+    caption = "Gezählt werden die unterschiedlichen Kombinationen von Parteien 
+    **unter Berücksichtigung** der Partei des/der Ministerpräsidenten/-in, 
+    d.h. SPD/CDU und CDU/SPD werden als unterschiedliche Koalitionen gezählt, 
+    SPD/Grüne/Linke vs. SPD/Linke/Grüne dagegen nicht.<br><br>
+    Daten: Bundesrat. Visualisierung: Ansgar Wolsing & Thorsten Faas",
+    x = NULL, y = "Anzahl unterschiedlicher Koalitionen",
+    fill = "Anzahl der Parteien"
+  ) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = "top",
+    legend.justification = "left",
+    plot.margin = margin(t = 4, r = 4, b = 12, l = 4),
+    axis.text.x = element_text(family = "Roboto Condensed SemiBold")
+  )
+```
+
+## Prüfungen
+
+### Dauer
+
+##### Kürzeste Zusammensetzungen
+
+```{r}
+df_bundesrat |> 
+  distinct(bundesrat_zusammensetzung, bundesrat_wochen) |> 
+  count(bundesrat_wochen) |> 
+  filter(bundesrat_wochen <= 12) |> 
+  arrange(bundesrat_wochen) |> 
+  gt()
+```
+
+##### Alle Zusammensetzungen
+
+```{r}
+df_bundesrat |> 
+  distinct(bundesrat_zusammensetzung, bundesrat_wochen) |> 
+  arrange(bundesrat_wochen) |> 
+  head(10)
+```
+
+Zusammensetzung #7
+
+```{r}
+auswahl_zusammensetzung <- 7
+df_bundesrat |> 
+  filter(bundesrat_zusammensetzung >= auswahl_zusammensetzung - 2 & bundesrat_zusammensetzung <= auswahl_zusammensetzung + 1) |> 
+  View()
+
+auswahl_zusammensetzung <- 7
+df_bundesrat |> 
+  filter(bundesrat_zusammensetzung >= auswahl_zusammensetzung - 2 & bundesrat_zusammensetzung <= auswahl_zusammensetzung + 1) |> 
+  select(1:4, Brandenburg, Saarland, `Thüringen`, Sachsen, Berlin) |> 
+  View()
+```
