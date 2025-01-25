@@ -117,15 +117,17 @@ df_bundesrat_bundesregierung <- df_bundesrat_long |>
     koalition_gleich = setequal(land_parteien, bund_parteien),
     # Alleinregierung einer der Koalitionsparteien im Bund
     koalition_allein = length(land_parteien) == 1 && land_parteien %in% bund_parteien,
-    # 2 aus 3 Parteien im Bund regieren im Land
-    koalition_2aus3 = if (length(bund_parteien) >= 3) {
+    # 2 aus 3 Parteien im Bund regieren im Land 
+    # - und im Land sind es exakt 2 Parteien in der Koalition
+    koalition_2aus3 = if (length(bund_parteien) >= 3 & length(land_parteien) == 2) {
       combn(bund_parteien, 2, simplify = FALSE) %>% 
         map_lgl(function(x) all(x %in% land_parteien)) %>% 
         any()
     } else { FALSE }
   ) %>%
   ungroup() |> 
-  mutate(koalition_gleich_oder_alleinreg = koalition_gleich | koalition_allein)
+  mutate(
+    koalition_gleich_oder_alleinreg = koalition_gleich | koalition_allein | koalition_2aus3) 
 ```
 
 Auszählung der Anteile der Stimmen
@@ -158,13 +160,6 @@ df_annotation_bundesregierung <- df_bundesrat_bundesregierung |>
 
 df_uebereinstimmungen |> 
   ggplot(aes(datum_wechsel, anteil_stimmen_uebereinstimmung)) +
-  # Markierung Bundesregierungen
-  # geom_segment(
-  #   data = df_annotation_bundesregierung,
-  #   aes(x = as_datetime(bund_start), xend = as_datetime(bund_start), y = 0.65, yend = 1),
-  #   inherit.aes = FALSE,
-  #   color = color_pal[1], linetype = "dotted"
-  # ) +
   geom_rect(
     data = df_annotation_bundesregierung |> 
       mutate(fill = factor(row_number() %% 2)),
