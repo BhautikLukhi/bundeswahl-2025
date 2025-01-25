@@ -123,7 +123,9 @@ df_bundesrat_bundesregierung <- df_bundesrat_long |>
       combn(bund_parteien, 2, simplify = FALSE) %>% 
         map_lgl(function(x) all(x %in% land_parteien)) %>% 
         any()
-    } else { FALSE }
+    } else { FALSE },
+    # mindestens eine Partei aus der Koalition im Bund in der Landesregierung vertreten
+    koalition_mindestens_teilweise = length(intersect(bund_parteien, land_parteien)) > 0 
   ) %>%
   ungroup() |> 
   mutate(
@@ -139,7 +141,10 @@ df_uebereinstimmungen <- df_bundesrat_bundesregierung |>
   group_by(datum_wechsel, bund_koalition) |> 
   summarize(
     n_stimmen_uebereinstimmung = sum(koalition_gleich_oder_alleinreg * stimmen),
+    n_stimmen_teilweise_uebereinstimmung = sum(koalition_mindestens_teilweise * stimmen),
     anteil_stimmen_uebereinstimmung = n_stimmen_uebereinstimmung / sum(stimmen),
+    anteil_stimmen_teilweise_uebereinstimmung = n_stimmen_teilweise_uebereinstimmung / 
+      sum(stimmen),
     .groups = "drop")
 df_uebereinstimmungen
 ```
@@ -170,9 +175,9 @@ df_uebereinstimmungen |>
   geom_text(
     data = df_annotation_bundesregierung,
     aes(x = as_datetime(bund_start),
-        y = 0.98, label = str_wrap(bund_koalition, 5)),
+        y = 1.025, label = str_wrap(bund_koalition, 5)),
     inherit.aes = FALSE,
-    color = "grey30", size = 3.5, hjust = 0, vjust = 1, nudge_x = 100 * 86400,
+    color = "grey30", size = 3.5, hjust = 0, vjust = 0, nudge_x = 100 * 86400,
     family = "Roboto Condensed SemiBold", lineheight = 0.8
   ) +
   geom_hline(aes(yintercept = 0.5), linewidth = 1, linetype = "solid", color = color_pal[3]) +
@@ -188,6 +193,23 @@ df_uebereinstimmungen |>
     fill = color_pal[3], alpha = 0.8
   ) +
   geom_step(color = "grey30", linewidth = 0.1) +
+  # Linie für die teilweise Übereinstimmung
+  geom_step(
+    aes(y = anteil_stimmen_teilweise_uebereinstimmung),
+    linetype = "dashed", color = color_pal[1]
+  ) +
+  annotate(
+    "text",
+    x = as_datetime("2016-01-01"), y = 0.8,
+    label = "Gestrichelte Linie:\nmindestens eine\nPartei vertreten",
+    size = 3, lineheight = 0.8, hjust = 0, family = "Roboto Condensed"
+  ) +
+  annotate(
+    GeomCurve,
+    x = as_datetime("2015-11-01"), xend = as_datetime("2014-02-01"),
+    y = 0.8, yend = 0.9, linewidth = 0.25, color = "grey20", curvature = -0.2,
+    arrow = arrow(angle = 20, length = unit(0.2, "cm"))
+  ) +
   scale_x_datetime(
     date_breaks = "4 years", date_labels = "%Y",
     expand = expansion(mult = c(0, 0.02))) +
@@ -198,8 +220,10 @@ df_uebereinstimmungen |>
   scale_fill_manual(values = c("transparent", "#D9D9D933")) +
   coord_cartesian(ylim = c(0, 1), clip = "off") +
   labs(
-    title = "",
-    caption = "Kriterium: Koalition auf Landesebene stimmt mit Bund überein oder  Alleinregierung eines der Partner im Bund",
+    title = "Titel",
+    subtitle = "Anteil der Stimmen der Länder im Bundesrat",
+    caption = "**TODO** Kriterium: Koalition auf Landesebene stimmt mit Bund überein oder  Alleinregierung eines der Partner im Bund.<br><br>
+    Daten: Bundesrat. Visualisierung: Ansgar Wolsing & Thorsten Faas",
     x = NULL, y = "Anteil der Stimmen (%)"
   ) +
   theme(
@@ -208,7 +232,8 @@ df_uebereinstimmungen |>
     axis.text.x = element_text(family = "Roboto Condensed SemiBold"),
     axis.text.y = element_markdown(),
     plot.margin = margin(t = 4, r = 28, b = 4, l = 4),
-    panel.grid.minor.y = element_blank()
+    panel.grid.minor.y = element_blank(),
+    plot.subtitle = element_textbox(margin = margin(t = 2, b = 28))
   )
 ```
 
