@@ -224,7 +224,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(<span class="fu">c</span>(land_koalition, bund_koalition), </span>
 <span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>           <span class="cf">function</span>(x) <span class="fu">str_replace</span>(x, <span class="st">"(CDU, CSU|CDU|CSU)"</span>, <span class="st">"Union"</span>))</span>
 <span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowwise</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowwise</span>() <span class="sc">|&gt;</span></span>
 <span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
 <span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">land_parteien =</span> <span class="fu">str_split</span>(land_koalition, <span class="st">"/"</span>),</span>
 <span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">bund_parteien =</span> <span class="fu">str_split</span>(bund_koalition, <span class="st">", "</span>),</span>
@@ -235,13 +235,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2 aus 3 Parteien im Bund regieren im Land </span></span>
 <span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># - und im Land sind es exakt 2 Parteien in der Koalition</span></span>
 <span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">koalition_2aus3 =</span> <span class="cf">if</span> (<span class="fu">length</span>(bund_parteien) <span class="sc">&gt;=</span> <span class="dv">3</span> <span class="sc">&amp;</span> <span class="fu">length</span>(land_parteien) <span class="sc">==</span> <span class="dv">2</span>) {</span>
-<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">combn</span>(bund_parteien, <span class="dv">2</span>, <span class="at">simplify =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map_lgl</span>(<span class="cf">function</span>(x) <span class="fu">all</span>(x <span class="sc">%in%</span> land_parteien)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">combn</span>(bund_parteien, <span class="dv">2</span>, <span class="at">simplify =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map_lgl</span>(<span class="cf">function</span>(x) <span class="fu">all</span>(x <span class="sc">%in%</span> land_parteien)) <span class="sc">|&gt;</span> </span>
 <span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>        <span class="fu">any</span>()</span>
 <span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> { <span class="cn">FALSE</span> },</span>
 <span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>    <span class="co"># mindestens eine Partei aus der Koalition im Bund in der Landesregierung vertreten</span></span>
 <span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">koalition_mindestens_teilweise =</span> <span class="fu">length</span>(<span class="fu">intersect</span>(bund_parteien, land_parteien)) <span class="sc">&gt;</span> <span class="dv">0</span> </span>
-<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
 <span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
 <span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
 <span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">koalition_gleich_oder_alleinreg =</span> koalition_gleich <span class="sc">|</span> koalition_allein <span class="sc">|</span> koalition_2aus3) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -332,13 +332,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Linie für die teilweise Übereinstimmung</span></span>
 <span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_step</span>(</span>
 <span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">y =</span> anteil_stimmen_teilweise_uebereinstimmung),</span>
-<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">linetype =</span> <span class="st">"dotted"</span>, <span class="at">color =</span> color_pal[<span class="dv">1</span>]</span>
+<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> color_pal[<span class="dv">1</span>]</span>
 <span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(</span>
 <span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>    <span class="st">"text"</span>,</span>
 <span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="fu">as_datetime</span>(<span class="st">"2016-01-01"</span>), <span class="at">y =</span> <span class="fl">0.8</span>,</span>
 <span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">label =</span> <span class="st">"Gestrichelte Linie:</span><span class="sc">\n</span><span class="st">mindestens eine</span><span class="sc">\n</span><span class="st">Partei vertreten"</span>,</span>
-<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="dv">3</span>, <span class="at">lineheight =</span> <span class="fl">0.8</span>, <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">family =</span> <span class="st">"Roboto Condensed"</span></span>
+<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="fl">3.5</span>, <span class="at">lineheight =</span> <span class="fl">0.8</span>, <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">family =</span> <span class="st">"Roboto Condensed"</span></span>
 <span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(</span>
 <span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>    GeomCurve,</span>
@@ -346,31 +346,48 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="fl">0.8</span>, <span class="at">yend =</span> <span class="fl">0.9</span>, <span class="at">linewidth =</span> <span class="fl">0.25</span>, <span class="at">color =</span> <span class="st">"grey20"</span>, <span class="at">curvature =</span> <span class="sc">-</span><span class="fl">0.2</span>,</span>
 <span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">arrow =</span> <span class="fu">arrow</span>(<span class="at">angle =</span> <span class="dv">20</span>, <span class="at">length =</span> <span class="fu">unit</span>(<span class="fl">0.2</span>, <span class="st">"cm"</span>))</span>
 <span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_datetime</span>(</span>
-<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a>    <span class="at">date_breaks =</span> <span class="st">"4 years"</span>, <span class="at">date_labels =</span> <span class="st">"%Y"</span>,</span>
-<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>    <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.02</span>))) <span class="sc">+</span></span>
-<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(</span>
-<span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.1</span>), </span>
-<span id="cb12-65"><a href="#cb12-65" aria-hidden="true" tabindex="-1"></a>    <span class="at">labels =</span> <span class="cf">function</span>(x) <span class="fu">ifelse</span>(x <span class="sc">==</span> <span class="fl">0.5</span>, <span class="st">"&lt;b style='color:#c17dfa'&gt;50%&lt;/b&gt;"</span>, scales<span class="sc">::</span><span class="fu">percent</span>(x)),</span>
-<span id="cb12-66"><a href="#cb12-66" aria-hidden="true" tabindex="-1"></a>    <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="dv">0</span>)) <span class="sc">+</span></span>
-<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"transparent"</span>, <span class="st">"#D9D9D933"</span>)) <span class="sc">+</span></span>
-<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">clip =</span> <span class="st">"off"</span>) <span class="sc">+</span></span>
-<span id="cb12-69"><a href="#cb12-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Titel"</span>,</span>
-<span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Anteil der Stimmen der Länder im Bundesrat"</span>,</span>
-<span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="st">"**TODO** Kriterium: Koalition auf Landesebene stimmt mit Bund überein oder  Alleinregierung eines der Partner im Bund.&lt;br&gt;&lt;br&gt;</span></span>
-<span id="cb12-73"><a href="#cb12-73" aria-hidden="true" tabindex="-1"></a><span class="st">    Daten: Bundesrat. Visualisierung: Ansgar Wolsing &amp; Thorsten Faas"</span>,</span>
-<span id="cb12-74"><a href="#cb12-74" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Anteil der Stimmen (%)"</span></span>
-<span id="cb12-75"><a href="#cb12-75" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb12-76"><a href="#cb12-76" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
-<span id="cb12-77"><a href="#cb12-77" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb12-78"><a href="#cb12-78" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.minor.x =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb12-79"><a href="#cb12-79" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">family =</span> <span class="st">"Roboto Condensed SemiBold"</span>),</span>
-<span id="cb12-80"><a href="#cb12-80" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y =</span> <span class="fu">element_markdown</span>(),</span>
-<span id="cb12-81"><a href="#cb12-81" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.margin =</span> <span class="fu">margin</span>(<span class="at">t =</span> <span class="dv">4</span>, <span class="at">r =</span> <span class="dv">28</span>, <span class="at">b =</span> <span class="dv">4</span>, <span class="at">l =</span> <span class="dv">4</span>),</span>
-<span id="cb12-82"><a href="#cb12-82" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.minor.y =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb12-83"><a href="#cb12-83" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.subtitle =</span> <span class="fu">element_textbox</span>(<span class="at">margin =</span> <span class="fu">margin</span>(<span class="at">t =</span> <span class="dv">2</span>, <span class="at">b =</span> <span class="dv">28</span>))</span>
-<span id="cb12-84"><a href="#cb12-84" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Hinweis auf die Nennung der Koalitionsparteien</span></span>
+<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(</span>
+<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>    <span class="st">"text"</span>,</span>
+<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="fu">as_datetime</span>(<span class="st">"1999-01-01"</span>), <span class="at">y =</span> <span class="fl">0.89</span>,</span>
+<span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a>    <span class="at">label =</span> <span class="st">"Koalition auf</span><span class="sc">\n</span><span class="st">Bundesebene"</span>,</span>
+<span id="cb12-65"><a href="#cb12-65" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="fl">3.5</span>, <span class="at">lineheight =</span> <span class="fl">0.8</span>, <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">family =</span> <span class="st">"Roboto Condensed"</span></span>
+<span id="cb12-66"><a href="#cb12-66" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(</span>
+<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a>    GeomCurve,</span>
+<span id="cb12-69"><a href="#cb12-69" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="fu">as_datetime</span>(<span class="st">"1999-01-01"</span>), <span class="at">xend =</span> <span class="fu">as_datetime</span>(<span class="st">"1999-01-01"</span>),</span>
+<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="fl">0.94</span>, <span class="at">yend =</span> <span class="fl">1.03</span>, <span class="at">linewidth =</span> <span class="fl">0.25</span>, <span class="at">color =</span> <span class="st">"grey20"</span>, <span class="at">curvature =</span> <span class="sc">-</span><span class="fl">0.2</span>,</span>
+<span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a>    <span class="at">arrow =</span> <span class="fu">arrow</span>(<span class="at">angle =</span> <span class="dv">20</span>, <span class="at">length =</span> <span class="fu">unit</span>(<span class="fl">0.2</span>, <span class="st">"cm"</span>))</span>
+<span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb12-73"><a href="#cb12-73" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_datetime</span>(</span>
+<span id="cb12-74"><a href="#cb12-74" aria-hidden="true" tabindex="-1"></a>    <span class="at">date_breaks =</span> <span class="st">"4 years"</span>, <span class="at">date_labels =</span> <span class="st">"%Y"</span>,</span>
+<span id="cb12-75"><a href="#cb12-75" aria-hidden="true" tabindex="-1"></a>    <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.02</span>))) <span class="sc">+</span></span>
+<span id="cb12-76"><a href="#cb12-76" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(</span>
+<span id="cb12-77"><a href="#cb12-77" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.1</span>), </span>
+<span id="cb12-78"><a href="#cb12-78" aria-hidden="true" tabindex="-1"></a>    <span class="at">labels =</span> <span class="cf">function</span>(x) <span class="fu">ifelse</span>(x <span class="sc">==</span> <span class="fl">0.5</span>, </span>
+<span id="cb12-79"><a href="#cb12-79" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"&lt;b style='color:#c17dfa'&gt;50%&lt;/b&gt;"</span>, </span>
+<span id="cb12-80"><a href="#cb12-80" aria-hidden="true" tabindex="-1"></a>                                scales<span class="sc">::</span><span class="fu">percent</span>(x)),</span>
+<span id="cb12-81"><a href="#cb12-81" aria-hidden="true" tabindex="-1"></a>    <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="dv">0</span>)) <span class="sc">+</span></span>
+<span id="cb12-82"><a href="#cb12-82" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"transparent"</span>, <span class="st">"#D9D9D933"</span>)) <span class="sc">+</span></span>
+<span id="cb12-83"><a href="#cb12-83" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">clip =</span> <span class="st">"off"</span>) <span class="sc">+</span></span>
+<span id="cb12-84"><a href="#cb12-84" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb12-85"><a href="#cb12-85" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">sprintf</span>(<span class="st">"Seit 1996 hatte eine Bundesregierung nur selten den Rückhalt&lt;br&gt;</span></span>
+<span id="cb12-86"><a href="#cb12-86" aria-hidden="true" tabindex="-1"></a><span class="st">    durch eine &lt;span style='color:%s'&gt;Mehrheit im Bundesrat&lt;/span&gt;"</span>, color_pal[<span class="dv">3</span>]),</span>
+<span id="cb12-87"><a href="#cb12-87" aria-hidden="true" tabindex="-1"></a>    <span class="co"># subtitle = "Anteil der Stimmen der Länder im Bundesrat seit 1996",</span></span>
+<span id="cb12-88"><a href="#cb12-88" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">""</span>,</span>
+<span id="cb12-89"><a href="#cb12-89" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="st">"Kriterium: Die Parteien in der Koalition auf Landesebene bilden eine exakte Teilmenge der Parteien in der Bundesregierung oder Alleinregierung eines der Koalitionspartner.&lt;br&gt;&lt;br&gt;</span></span>
+<span id="cb12-90"><a href="#cb12-90" aria-hidden="true" tabindex="-1"></a><span class="st">    Daten: Bundesrat. Visualisierung: Ansgar Wolsing &amp; Thorsten Faas"</span>,</span>
+<span id="cb12-91"><a href="#cb12-91" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Anteil der Stimmen der Länder (%)"</span></span>
+<span id="cb12-92"><a href="#cb12-92" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb12-93"><a href="#cb12-93" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb12-94"><a href="#cb12-94" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb12-95"><a href="#cb12-95" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.minor.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb12-96"><a href="#cb12-96" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">family =</span> <span class="st">"Roboto Condensed SemiBold"</span>),</span>
+<span id="cb12-97"><a href="#cb12-97" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y =</span> <span class="fu">element_markdown</span>(),</span>
+<span id="cb12-98"><a href="#cb12-98" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.margin =</span> <span class="fu">margin</span>(<span class="at">t =</span> <span class="dv">4</span>, <span class="at">r =</span> <span class="dv">28</span>, <span class="at">b =</span> <span class="dv">4</span>, <span class="at">l =</span> <span class="dv">4</span>),</span>
+<span id="cb12-99"><a href="#cb12-99" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.minor.y =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb12-100"><a href="#cb12-100" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.subtitle =</span> <span class="fu">element_textbox</span>(<span class="at">margin =</span> <span class="fu">margin</span>(<span class="at">t =</span> <span class="dv">2</span>, <span class="at">b =</span> <span class="dv">28</span>))</span>
+<span id="cb12-101"><a href="#cb12-101" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -586,23 +603,23 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
 <span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<div id="hfhydxgzjx" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#hfhydxgzjx table {
+<div id="rkerjnbxas" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#rkerjnbxas table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#hfhydxgzjx thead, #hfhydxgzjx tbody, #hfhydxgzjx tfoot, #hfhydxgzjx tr, #hfhydxgzjx td, #hfhydxgzjx th {
+#rkerjnbxas thead, #rkerjnbxas tbody, #rkerjnbxas tfoot, #rkerjnbxas tr, #rkerjnbxas td, #rkerjnbxas th {
   border-style: none;
 }
 
-#hfhydxgzjx p {
+#rkerjnbxas p {
   margin: 0;
   padding: 0;
 }
 
-#hfhydxgzjx .gt_table {
+#rkerjnbxas .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -628,12 +645,12 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   border-left-color: #D3D3D3;
 }
 
-#hfhydxgzjx .gt_caption {
+#rkerjnbxas .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#hfhydxgzjx .gt_title {
+#rkerjnbxas .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -645,7 +662,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   border-bottom-width: 0;
 }
 
-#hfhydxgzjx .gt_subtitle {
+#rkerjnbxas .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -657,7 +674,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   border-top-width: 0;
 }
 
-#hfhydxgzjx .gt_heading {
+#rkerjnbxas .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -669,13 +686,13 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   border-right-color: #D3D3D3;
 }
 
-#hfhydxgzjx .gt_bottom_border {
+#rkerjnbxas .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#hfhydxgzjx .gt_col_headings {
+#rkerjnbxas .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -690,7 +707,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   border-right-color: #D3D3D3;
 }
 
-#hfhydxgzjx .gt_col_heading {
+#rkerjnbxas .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -710,7 +727,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   overflow-x: hidden;
 }
 
-#hfhydxgzjx .gt_column_spanner_outer {
+#rkerjnbxas .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -722,15 +739,15 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   padding-right: 4px;
 }
 
-#hfhydxgzjx .gt_column_spanner_outer:first-child {
+#rkerjnbxas .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#hfhydxgzjx .gt_column_spanner_outer:last-child {
+#rkerjnbxas .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#hfhydxgzjx .gt_column_spanner {
+#rkerjnbxas .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -742,11 +759,11 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   width: 100%;
 }
 
-#hfhydxgzjx .gt_spanner_row {
+#rkerjnbxas .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#hfhydxgzjx .gt_group_heading {
+#rkerjnbxas .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -772,7 +789,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   text-align: left;
 }
 
-#hfhydxgzjx .gt_empty_group_heading {
+#rkerjnbxas .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -787,15 +804,15 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   vertical-align: middle;
 }
 
-#hfhydxgzjx .gt_from_md > :first-child {
+#rkerjnbxas .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#hfhydxgzjx .gt_from_md > :last-child {
+#rkerjnbxas .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#hfhydxgzjx .gt_row {
+#rkerjnbxas .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -814,7 +831,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   overflow-x: hidden;
 }
 
-#hfhydxgzjx .gt_stub {
+#rkerjnbxas .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -827,7 +844,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   padding-right: 5px;
 }
 
-#hfhydxgzjx .gt_stub_row_group {
+#rkerjnbxas .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -841,15 +858,15 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   vertical-align: top;
 }
 
-#hfhydxgzjx .gt_row_group_first td {
+#rkerjnbxas .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#hfhydxgzjx .gt_row_group_first th {
+#rkerjnbxas .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#hfhydxgzjx .gt_summary_row {
+#rkerjnbxas .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -859,16 +876,16 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   padding-right: 5px;
 }
 
-#hfhydxgzjx .gt_first_summary_row {
+#rkerjnbxas .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#hfhydxgzjx .gt_first_summary_row.thick {
+#rkerjnbxas .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#hfhydxgzjx .gt_last_summary_row {
+#rkerjnbxas .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -878,7 +895,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   border-bottom-color: #D3D3D3;
 }
 
-#hfhydxgzjx .gt_grand_summary_row {
+#rkerjnbxas .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -888,7 +905,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   padding-right: 5px;
 }
 
-#hfhydxgzjx .gt_first_grand_summary_row {
+#rkerjnbxas .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -898,7 +915,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   border-top-color: #D3D3D3;
 }
 
-#hfhydxgzjx .gt_last_grand_summary_row_top {
+#rkerjnbxas .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -908,11 +925,11 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   border-bottom-color: #D3D3D3;
 }
 
-#hfhydxgzjx .gt_striped {
+#rkerjnbxas .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#hfhydxgzjx .gt_table_body {
+#rkerjnbxas .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -921,7 +938,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   border-bottom-color: #D3D3D3;
 }
 
-#hfhydxgzjx .gt_footnotes {
+#rkerjnbxas .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -935,7 +952,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   border-right-color: #D3D3D3;
 }
 
-#hfhydxgzjx .gt_footnote {
+#rkerjnbxas .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -944,7 +961,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   padding-right: 5px;
 }
 
-#hfhydxgzjx .gt_sourcenotes {
+#rkerjnbxas .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -958,7 +975,7 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   border-right-color: #D3D3D3;
 }
 
-#hfhydxgzjx .gt_sourcenote {
+#rkerjnbxas .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -966,72 +983,72 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
   padding-right: 5px;
 }
 
-#hfhydxgzjx .gt_left {
+#rkerjnbxas .gt_left {
   text-align: left;
 }
 
-#hfhydxgzjx .gt_center {
+#rkerjnbxas .gt_center {
   text-align: center;
 }
 
-#hfhydxgzjx .gt_right {
+#rkerjnbxas .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#hfhydxgzjx .gt_font_normal {
+#rkerjnbxas .gt_font_normal {
   font-weight: normal;
 }
 
-#hfhydxgzjx .gt_font_bold {
+#rkerjnbxas .gt_font_bold {
   font-weight: bold;
 }
 
-#hfhydxgzjx .gt_font_italic {
+#rkerjnbxas .gt_font_italic {
   font-style: italic;
 }
 
-#hfhydxgzjx .gt_super {
+#rkerjnbxas .gt_super {
   font-size: 65%;
 }
 
-#hfhydxgzjx .gt_footnote_marks {
+#rkerjnbxas .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#hfhydxgzjx .gt_asterisk {
+#rkerjnbxas .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#hfhydxgzjx .gt_indent_1 {
+#rkerjnbxas .gt_indent_1 {
   text-indent: 5px;
 }
 
-#hfhydxgzjx .gt_indent_2 {
+#rkerjnbxas .gt_indent_2 {
   text-indent: 10px;
 }
 
-#hfhydxgzjx .gt_indent_3 {
+#rkerjnbxas .gt_indent_3 {
   text-indent: 15px;
 }
 
-#hfhydxgzjx .gt_indent_4 {
+#rkerjnbxas .gt_indent_4 {
   text-indent: 20px;
 }
 
-#hfhydxgzjx .gt_indent_5 {
+#rkerjnbxas .gt_indent_5 {
   text-indent: 25px;
 }
 
-#hfhydxgzjx .katex-display {
+#rkerjnbxas .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#hfhydxgzjx div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#rkerjnbxas div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1138,6 +1155,67 @@ SPD/CDU/Grüne ungleich CDU/SPD/Grüne.</p>
 </details>
 </div>
 </section>
+</section>
+<section id="hypothetische-konstellationen" class="level3">
+<h3 class="anchored" data-anchor-id="hypothetische-konstellationen">Hypothetische Konstellationen</h3>
+<p>Welche Koalitionen hätten welchen Rückhalt im Bundesrat, gemessen über den Anteil der Stimmen der Ländern mit exakten Teilmengen / Alleinregierungen der Koalitionsparteien aus dem Bund.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>df_hypothetische_koalitionen <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">bund_koalition =</span> <span class="fu">c</span>(<span class="st">"CDU, CSU, Grüne"</span>, <span class="st">"CDU, CSU, SPD"</span>, <span class="st">"CDU, CSU, SPD, Grüne"</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>df_bundesrat_bundesregierung_hypothetisch <span class="ot">&lt;-</span> </span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  df_bundesrat_long <span class="sc">|&gt;</span> </span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Aktuelle Zusammensetzung des Bundesrats auswählen</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(bundesrat_zusammensetzung <span class="sc">==</span> <span class="fu">max</span>(bundesrat_zusammensetzung)) <span class="sc">|&gt;</span> </span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(bundesrat_zusammensetzung, bundesrat_start, bundesrat_ende, bundesrat_wochen)) <span class="sc">|&gt;</span> </span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cross_join</span>(df_hypothetische_koalitionen) <span class="sc">|&gt;</span> </span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Stimmen der Bundesländer hinzufügen</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">stimmen =</span> stimmen[bundesland],</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># CDU/CSU als Union codieren</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(<span class="fu">c</span>(land_koalition, bund_koalition), </span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>           <span class="cf">function</span>(x) <span class="fu">str_replace</span>(x, <span class="st">"(CDU, CSU|CDU|CSU)"</span>, <span class="st">"Union"</span>))</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowwise</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">land_parteien =</span> <span class="fu">str_split</span>(land_koalition, <span class="st">"/"</span>),</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">bund_parteien =</span> <span class="fu">str_split</span>(bund_koalition, <span class="st">", "</span>),</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Koalitionen in Bund und Land gleich</span></span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">koalition_gleich =</span> <span class="fu">setequal</span>(land_parteien, bund_parteien),</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Alleinregierung einer der Koalitionsparteien im Bund</span></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">koalition_allein =</span> <span class="fu">length</span>(land_parteien) <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;&amp;</span> land_parteien <span class="sc">%in%</span> bund_parteien,</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2 aus 3 Parteien im Bund regieren im Land </span></span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># - und im Land sind es exakt 2 Parteien in der Koalition</span></span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">koalition_2aus3 =</span> <span class="cf">if</span> (<span class="fu">length</span>(bund_parteien) <span class="sc">&gt;=</span> <span class="dv">3</span> <span class="sc">&amp;</span> <span class="fu">length</span>(land_parteien) <span class="sc">==</span> <span class="dv">2</span>) {</span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">combn</span>(bund_parteien, <span class="dv">2</span>, <span class="at">simplify =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map_lgl</span>(<span class="cf">function</span>(x) <span class="fu">all</span>(x <span class="sc">%in%</span> land_parteien)) <span class="sc">|&gt;</span> </span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>        <span class="fu">any</span>()</span>
+<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> { <span class="cn">FALSE</span> },</span>
+<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">koalition_gleich_oder_alleinreg =</span> koalition_gleich <span class="sc">|</span> koalition_allein <span class="sc">|</span> koalition_2aus3)</span>
+<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a>df_uebereinstimmungen_hypothetisch <span class="ot">&lt;-</span> df_bundesrat_bundesregierung_hypothetisch <span class="sc">|&gt;</span> </span>
+<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(bund_koalition) <span class="sc">|&gt;</span> </span>
+<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(</span>
+<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_stimmen_uebereinstimmung =</span> <span class="fu">sum</span>(koalition_gleich_oder_alleinreg <span class="sc">*</span> stimmen),</span>
+<span id="cb22-42"><a href="#cb22-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">anteil_stimmen_uebereinstimmung =</span> n_stimmen_uebereinstimmung <span class="sc">/</span> <span class="fu">sum</span>(stimmen),,</span>
+<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span>)</span>
+<span id="cb22-44"><a href="#cb22-44" aria-hidden="true" tabindex="-1"></a>df_uebereinstimmungen_hypothetisch</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 3
+  bund_koalition    n_stimmen_uebereinstimmung anteil_stimmen_uebereinstimmung
+  &lt;chr&gt;                                  &lt;dbl&gt;                           &lt;dbl&gt;
+1 Union, Grüne                              16                           0.232
+2 Union, SPD                                16                           0.232
+3 Union, SPD, Grüne                         41                           0.594</code></pre>
+</div>
+</div>
 </section>
 </section>
 
