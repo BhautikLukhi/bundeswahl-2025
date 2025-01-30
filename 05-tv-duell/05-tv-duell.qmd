@@ -23,7 +23,7 @@ theme_set(theme_custom())
 Aufbereitung der Daten in [05-poba-kandidaten.R](05-poba-kandidaten.R)
 
 ```{r load-data}
-df_skalo <- read_tsv(here("data", "politbarometer-kandidaten.tsv"))
+df_skalo <- read_tsv(here("data", "Politbarometer", "politbarometer-kandidaten.tsv"))
 ```
 
 ## Visualisierung
