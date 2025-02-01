@@ -26,8 +26,33 @@ Die Datensätze mit den Stimmenanteilen in den Wahlkreisen bei den Bundestagswah
 
 Bei der ersten [Bundestagswahl von 1949](https://www.bundestag.de/parlament/geschichte/75jahre/erster_bundestag/wahl1949-933578) hatten die Wählenden nur eine Stimme.
 
-```{r load-data}
-year <- "1961"
+#### Sammelfunktion
+
+```{r load-data-function}
+
+# Seit 2005 ist die Partei nur einmal in der obersten Headerzeile genannt, 
+  # danach leere Spalten
+  expand_header <- function(header) {
+    parts <- str_split(header, ";")
+    expanded <- accumulate(parts, ~ ifelse(.y == "" | is.na(.y), .x, .y))
+    expanded
+  }
+
+prepare_header <- function(x, year) {
+  x <- x |> 
+    unlist() |> 
+    as.character() 
+  
+  if (year > 1949) {
+    x <- expand_header(x)  
+  }
+  x
+}
+
+has_data <- function(x) {
+  sum(!is.na(x)) > 0 
+}
+
 
 load_data <- function(year) {
   
@@ -52,33 +77,13 @@ load_data <- function(year) {
   
   # Kopfzeile extrahieren und neu kombinieren (einzeilig)
   ## Ab 2002 haben die Datensätze eine 3. Kopfzeile: "Endgültig,Vorperiode"
-  
   df_wk_head <- read_csv2(filename, 
                           locale = locale("de", encoding = encoding), 
-                          skip = skip_rows, n_max = 100, col_names = FALSE)
+                          skip = skip_rows, n_max = 100, col_names = FALSE,
+                          show_col_types = FALSE)
   
   # Leere Spalten am Ende entfernen
-  has_data <- function(x) { sum(!is.na(x)) > 0 }
-  
   df_wk_head <- select(df_wk_head, where(has_data))
-  
-  # Seit 2005 ist die Partei nur einmal in der obersten Headerzeile genannt, danach leere Spalten
-  expand_header <- function(header) {
-    parts <- str_split(header, ";")
-    expanded <- accumulate(parts, ~ ifelse(.y == "" | is.na(.y), .x, .y))
-    expanded
-  }
-  
-  prepare_header <- function(x, year) {
-    x <- x |> 
-      unlist() |> 
-      as.character() 
-    
-    if (year > 1949) {
-      x <- expand_header(x)  
-    }
-    x
-  }
   
   header_1 <- prepare_header(df_wk_head[1, ], year)
   header_2 <- prepare_header(df_wk_head[2, ], year)
@@ -89,17 +94,18 @@ load_data <- function(year) {
     TRUE ~ paste(header_1, header_2, sep = "_")
   )
   
-  if (year >= 2009) {
+  if (year >= 2005) {
     skip_rows <- skip_rows + 1
     header_3 <- df_wk_head[3, ] |> unlist() |> as.character()
     colnames_combined <- ifelse(
       header_3 != "" & !is.na(header_3), 
       paste(colnames_combined, header_3, sep = "_"), colnames_combined)
   }
-  head(colnames_combined, 10)
+  # head(colnames_combined, 10)
   
   # Daten vollständig einlesen
-  df_wk <- read_csv2(filename, skip = skip_rows + 2, col_names = FALSE)
+  df_wk <- read_csv2(filename, skip = skip_rows + 2, col_names = FALSE,
+                     show_col_types = FALSE)
   df_wk <- select(df_wk, where(has_data))
   colnames(df_wk) <- colnames_combined
   
@@ -107,7 +113,7 @@ load_data <- function(year) {
   df_wk <- df_wk[!is.na(names(df_wk))]
   
   # Entferne Variablen der Vorperiode (ab 2009)
-  if (year >= 2009) {
+  if (year >= 2005) {
     df_wk <- df_wk |> 
       select(-ends_with("_Vorperiode"))
   }
@@ -157,7 +163,9 @@ load_data <- function(year) {
   
   df_wk_long <- df_wk_long |> 
     select(-stimme2) |> 
-    mutate(kennzahl = kennzahl) |> 
+    mutate(
+      across(c(wknr, bundesland), as.character),
+      kennzahl = kennzahl) |> 
     pivot_wider(
       names_from = "kennzahl", values_from = "anzahl_basis", 
       values_fn = min
@@ -167,8 +175,33 @@ load_data <- function(year) {
   
   df_wk_long
 }
+```
 
-df_wk_long <- load_data(1972)
+#### Laden
+
+```{r load-data, message=FALSE, warning=FALSE}
+
+btw_years <- c(1949, 1953, 1957, 1961, 1965, 1969, 1972, 1976, 1980, 1983, 1987, 1990,
+           1994, 1998, 2002, 2005, 2009, 2013, 2017, 2021)
+
+load_data_safely <- safely(load_data)
+dfs_wk <- map(btw_years, load_data_safely)
+```
+
+##### Ergebnis auf Fehler prüfen
+
+```{r}
+dfs_wk |> 
+  transpose() |> 
+  View()
+```
+
+##### Alle BTW in einem Datensatz
+
+```{r load-data-2, message=FALSE, warning=FALSE, output=FALSE}
+dfs_wk <- map(btw_years, load_data)
+dfs_wk <- set_names(dfs_wk, btw_years)
+df_wk_alle <- bind_rows(dfs_wk, .id = "wahl")
 ```
 
 ### Datenaufbereitung
