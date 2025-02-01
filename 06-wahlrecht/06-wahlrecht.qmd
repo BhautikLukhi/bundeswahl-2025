@@ -27,139 +27,148 @@ Die Datensätze mit den Stimmenanteilen in den Wahlkreisen bei den Bundestagswah
 Bei der ersten [Bundestagswahl von 1949](https://www.bundestag.de/parlament/geschichte/75jahre/erster_bundestag/wahl1949-933578) hatten die Wählenden nur eine Stimme.
 
 ```{r load-data}
-year <- "1949"
-filename <- here("data", "Wahlkreise", "btw_kerg", sprintf("btw%s_kerg.csv", year))
+year <- "1961"
 
-encoding <- guess_encoding(filename) |> 
-  pull(encoding) |> 
-  head(1)
-
-df_wk_head_lines <- read_lines(filename, 
-                        locale = locale("de", encoding = encoding), n_max = 10)
-
-# Erste Datenzeile finden
-# unterschiedliche Struktur:
-## bis einschließlich 2017 sind die ersten Nichtdatenzahlen mit # vorangestellt, 2021 nicht mehr
-
-if (year <= 2017) {
-  skip_rows <- max(which(str_detect(df_wk_head_lines, "^#")))
-} else {
-  skip_rows <- 2 # 2021
-}
-
-# Kopfzeile extrahieren und neu kombinieren (einzeilig)
-## Ab 2002 haben die Datensätze eine 3. Kopfzeile: "Endgültig,Vorperiode"
-
-df_wk_head <- read_csv2(filename, 
-                        locale = locale("de", encoding = encoding), 
-                        skip = skip_rows, n_max = 100, col_names = FALSE)
-
-# Leere Spalten am Ende entfernen
-has_data <- function(x) { sum(!is.na(x)) > 0 }
-
-df_wk_head <- select(df_wk_head, where(has_data))
-
-# Seit 2005 ist die Partei nur einmal in der obersten Headerzeile genannt, danach leere Spalten
-expand_header <- function(header) {
-  parts <- str_split(header, ";")
-  expanded <- accumulate(parts, ~ ifelse(.y == "" | is.na(.y), .x, .y))
-  expanded
-}
-
-prepare_header <- function(x, year) {
-  x <- x |> 
-    unlist() |> 
-    as.character() 
+load_data <- function(year) {
   
-  if (year > 1949) {
-    x <- expand_header(x)  
+  filename <- here("data", "Wahlkreise", 
+                   "btw_kerg", sprintf("btw%s_kerg.csv", year))
+  
+  encoding <- guess_encoding(filename) |> 
+    pull(encoding) |> 
+    head(1)
+  
+  df_wk_head_lines <- read_lines(filename, 
+                          locale = locale("de", encoding = encoding), n_max = 10)
+  
+  # Erste Datenzeile finden
+  # unterschiedliche Struktur:
+  ## bis einschließlich 2017 sind die ersten Nichtdatenzahlen mit # vorangestellt
+  if (year <= 2017) {
+    skip_rows <- max(which(str_detect(df_wk_head_lines, "^#")))
+  } else {
+    skip_rows <- 2 # 2021
   }
-  x
-}
-
-header_1 <- prepare_header(df_wk_head[1, ], year)
-header_2 <- prepare_header(df_wk_head[2, ], year)
-
-colnames_combined <- case_when(
-  header_1 == "" | is.na(header_1) ~ header_2,
-  header_2 == "" | is.na(header_2) ~ header_1,
-  TRUE ~ paste(header_1, header_2, sep = "_")
-)
-
-if (year >= 2009) {
-  skip_rows <- skip_rows + 1
-  header_3 <- df_wk_head[3, ] |> unlist() |> as.character()
-  colnames_combined <- ifelse(
-    header_3 != "" & !is.na(header_3), 
-    paste(colnames_combined, header_3, sep = "_"), colnames_combined)
-}
-head(colnames_combined, 10)
-
-# Daten vollständig einlesen
-df_wk <- read_csv2(filename, skip = skip_rows + 2, col_names = FALSE)
-df_wk <- select(df_wk, where(has_data))
-colnames(df_wk) <- colnames_combined
-
-# In manchen Dateien sind leere Spalten ohne Spaltennamen (NA) enthalten
-df_wk <- df_wk[!is.na(names(df_wk))]
-
-# Entferne Variablen der Vorperiode (ab 2009)
-if (year >= 2009) {
-  df_wk <- df_wk |> 
-    select(-ends_with("_Vorperiode"))
-}
   
-# Angleichung der Spaltennamen
-if (year == 1949) {
-  df_wk <- df_wk |> 
-    rename(wknr = 1, wkname = 2, bundesland = 3, 
-           wahlberechtigte = 4,
-           waehler = 5,
-           ungueltige = 6,
-           gueltige = 7) |> 
-    filter(!is.na(wknr)) 
-} else {
-  df_wk <- df_wk |> 
-    rename(wknr = 1, wkname = 2, bundesland = 3, 
-           wahlberechtigte_Erststimmen = 4, wahlberechtigte_Zweitstimmen = 5,
-           waehler_Erststimmen = 6, waehler_Zweitstimmen = 7,
-           ungueltige_Erststimmen = 8, ungueltige_Zweitstimmen = 9,
-           gueltige_Erststimmen = 10, gueltige_Zweitstimmen = 11) |> 
-    filter(!is.na(wknr)) 
-  colnames(df_wk) <- str_remove(colnames(df_wk), "_Endgültig")  
+  # Kopfzeile extrahieren und neu kombinieren (einzeilig)
+  ## Ab 2002 haben die Datensätze eine 3. Kopfzeile: "Endgültig,Vorperiode"
+  
+  df_wk_head <- read_csv2(filename, 
+                          locale = locale("de", encoding = encoding), 
+                          skip = skip_rows, n_max = 100, col_names = FALSE)
+  
+  # Leere Spalten am Ende entfernen
+  has_data <- function(x) { sum(!is.na(x)) > 0 }
+  
+  df_wk_head <- select(df_wk_head, where(has_data))
+  
+  # Seit 2005 ist die Partei nur einmal in der obersten Headerzeile genannt, danach leere Spalten
+  expand_header <- function(header) {
+    parts <- str_split(header, ";")
+    expanded <- accumulate(parts, ~ ifelse(.y == "" | is.na(.y), .x, .y))
+    expanded
+  }
+  
+  prepare_header <- function(x, year) {
+    x <- x |> 
+      unlist() |> 
+      as.character() 
+    
+    if (year > 1949) {
+      x <- expand_header(x)  
+    }
+    x
+  }
+  
+  header_1 <- prepare_header(df_wk_head[1, ], year)
+  header_2 <- prepare_header(df_wk_head[2, ], year)
+  
+  colnames_combined <- case_when(
+    header_1 == "" | is.na(header_1) ~ header_2,
+    header_2 == "" | is.na(header_2) ~ header_1,
+    TRUE ~ paste(header_1, header_2, sep = "_")
+  )
+  
+  if (year >= 2009) {
+    skip_rows <- skip_rows + 1
+    header_3 <- df_wk_head[3, ] |> unlist() |> as.character()
+    colnames_combined <- ifelse(
+      header_3 != "" & !is.na(header_3), 
+      paste(colnames_combined, header_3, sep = "_"), colnames_combined)
+  }
+  head(colnames_combined, 10)
+  
+  # Daten vollständig einlesen
+  df_wk <- read_csv2(filename, skip = skip_rows + 2, col_names = FALSE)
+  df_wk <- select(df_wk, where(has_data))
+  colnames(df_wk) <- colnames_combined
+  
+  # In manchen Dateien sind leere Spalten ohne Spaltennamen (NA) enthalten
+  df_wk <- df_wk[!is.na(names(df_wk))]
+  
+  # Entferne Variablen der Vorperiode (ab 2009)
+  if (year >= 2009) {
+    df_wk <- df_wk |> 
+      select(-ends_with("_Vorperiode"))
+  }
+    
+  # Angleichung der Spaltennamen
+  if (year == 1949) {
+    df_wk <- df_wk |> 
+      rename(wknr = 1, wkname = 2, bundesland = 3, 
+             wahlberechtigte = 4,
+             waehler = 5,
+             ungueltige = 6,
+             gueltige = 7) |> 
+      filter(!is.na(wknr)) 
+  } else {
+    df_wk <- df_wk |> 
+      rename(wknr = 1, wkname = 2, bundesland = 3, 
+             wahlberechtigte_Erststimmen = 4, wahlberechtigte_Zweitstimmen = 5,
+             waehler_Erststimmen = 6, waehler_Zweitstimmen = 7,
+             ungueltige_Erststimmen = 8, ungueltige_Zweitstimmen = 9,
+             gueltige_Erststimmen = 10, gueltige_Zweitstimmen = 11) |> 
+      filter(!is.na(wknr)) 
+    colnames(df_wk) <- str_remove(colnames(df_wk), "_Endgültig")  
+  }
+  
+  
+  # Long format
+  if (year == 1949) {
+    df_wk_long <- df_wk |> 
+      pivot_longer(cols = -c(wknr:gueltige), 
+                   # Zwecks Konsistenz bewusst in partei und stimme splitten, 
+                   # obwohl es die Namensstruktur hier nicht gibt
+                   names_to = c("partei", "stimme"), names_sep = "_",
+                   values_to = "anzahl") |> 
+      pivot_longer(cols = wahlberechtigte:gueltige,
+                   names_to = c("kennzahl", "stimme2"), names_sep = "_",
+                   values_to = "anzahl_basis") 
+  } else {
+    df_wk_long <- df_wk |> 
+      pivot_longer(cols = -c(wknr:gueltige_Zweitstimmen), 
+                   names_to = c("partei", "stimme"), names_sep = "_",
+                   values_to = "anzahl") |> 
+      pivot_longer(cols = wahlberechtigte_Erststimmen:gueltige_Zweitstimmen,
+                   names_to = c("kennzahl", "stimme2"), names_sep = "_",
+                   values_to = "anzahl_basis") |> 
+    filter(stimme == stimme2)
+  }
+  
+  df_wk_long <- df_wk_long |> 
+    select(-stimme2) |> 
+    mutate(kennzahl = kennzahl) |> 
+    pivot_wider(
+      names_from = "kennzahl", values_from = "anzahl_basis", 
+      values_fn = min
+    ) |> 
+    mutate(anteil = anzahl / gueltige) |> 
+    relocate(anteil, .before = 7)
+  
+  df_wk_long
 }
 
-
-# Long format
-if (year == 1949) {
-  df_wk_long <- df_wk |> 
-    pivot_longer(cols = -c(wknr:gueltige), 
-                 # Zwecks Konsistenz bewusst in partei und stimme splitten, 
-                 # obwohl es die Namensstruktur hier nicht gibt
-                 names_to = c("partei", "stimme"), names_sep = "_",
-                 values_to = "anzahl") |> 
-    pivot_longer(cols = wahlberechtigte:gueltige,
-                 names_to = c("kennzahl", "stimme2"), names_sep = "_",
-                 values_to = "anzahl_basis") 
-} else {
-  df_wk_long <- df_wk |> 
-    pivot_longer(cols = -c(wknr:gueltige_Zweitstimmen), 
-                 names_to = c("partei", "stimme"), names_sep = "_",
-                 values_to = "anzahl") |> 
-    pivot_longer(cols = wahlberechtigte_Erststimmen:gueltige_Zweitstimmen,
-                 names_to = c("kennzahl", "stimme2"), names_sep = "_",
-                 values_to = "anzahl_basis") |> 
-  filter(stimme == stimme2)
-}
-
-df_wk_long <- df_wk_long |> 
-  select(-stimme2) |> 
-  mutate(kennzahl = kennzahl) |> 
-  pivot_wider(
-    names_from = "kennzahl", values_from = "anzahl_basis", values_fn = min
-  ) |> 
-  mutate(anteil = anzahl / gueltige) |> 
-  relocate(anteil, .before = 7)
+df_wk_long <- load_data(1972)
 ```
 
 ### Datenaufbereitung
