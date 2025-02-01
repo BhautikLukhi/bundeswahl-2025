@@ -1,0 +1,261 @@
+---
+title: "06 Wahlrecht"
+format:
+  html:
+    code-fold: true
+    message: false
+    warning: false
+---
+
+```{r setup}
+library(tidyverse)
+library(ggtext)
+library(here)
+
+knitr::opts_chunk$set(dev = "ragg_png")
+
+source(here("R", "custom-theme.R"))
+theme_set(theme_custom())
+```
+
+## Daten
+
+### Laden der Daten
+
+Stimmenanteile in den Wahlkreisen bei der BTW 2021:
+
+```{r load-data-2021}
+df_wk_2021 <- read_csv2(here("data", "Wahlkreise", "2021", "kerg2.csv"),
+                             skip = 9, name_repair = janitor::make_clean_names) 
+```
+
+1990
+
+```{r load-data-1990}
+year <- "1953"
+filename <- here("data", "Wahlkreise", "btw_kerg", sprintf("btw%s_kerg.csv", year))
+# df_wk_1990_raw <- read_csv2(filename, 
+#                         locale = locale("de", encoding = "Windows-1252"), skip = 5, 
+#                         col_names = FALSE)
+
+encoding <- guess_encoding(filename) |> 
+  pull(encoding) |> 
+  head(1)
+
+df_wk_head_lines <- read_lines(filename, 
+                        locale = locale("de", encoding = encoding), n_max = 10)
+
+# Erste Datenzeile finden
+# unterschiedliche Struktur:
+## bis einschließlich 2017 sind die ersten Nichtdatenzahlen mit # vorangestellt, 2021 nicht mehr
+
+if (year <= 2017) {
+  skip_rows <- max(which(str_detect(df_wk_head_lines, "^#")))
+} else {
+  skip_rows <- 2 # 2021
+}
+
+# Kopfzeile extrahieren und neu kombinieren (einzeilig)
+## Ab 2002 haben die Datensätze eine 3. Kopfzeile: "Endgültig,Vorperiode"
+
+
+df_wk_head <- read_csv2(filename, 
+                        locale = locale("de", encoding = encoding), 
+                        skip = skip_rows, n_max = 100, col_names = FALSE)
+
+# Leere Spalten am Ende entfernen
+has_data <- function(x) { sum(!is.na(x)) > 0 }
+
+df_wk_head <- select(df_wk_head, where(has_data))
+
+# Seit 2005 ist die Partei nur einmal in der obersten Headerzeile genannt, danach leere Spalten
+expand_header <- function(header) {
+  parts <- str_split(header, ";")
+  expanded <- accumulate(parts, ~ ifelse(.y == "" | is.na(.y), .x, .y))
+  expanded
+}
+
+prepare_header <- function(x) {
+  x |> 
+    unlist() |> 
+    as.character() |> 
+    expand_header()
+}
+
+header_1 <- prepare_header(df_wk_head[1, ])
+header_2 <- prepare_header(df_wk_head[2, ])
+
+
+colnames_combined <- case_when(
+  header_1 == "" | is.na(header_1) ~ header_2,
+  header_2 == "" | is.na(header_2) ~ header_1,
+  TRUE ~ paste(header_1, header_2, sep = "_")
+)
+
+if (year >= 2009) {
+  skip_rows <- skip_rows + 1
+  header_3 <- df_wk_head[3, ] |> unlist() |> as.character()
+  colnames_combined <- ifelse(
+    header_3 != "" & !is.na(header_3), 
+    paste(colnames_combined, header_3, sep = "_"), colnames_combined)
+}
+head(colnames_combined, 10)
+
+
+df_wk <- read_csv2(filename, skip = skip_rows + 2, col_names = FALSE)
+df_wk <- select(df_wk, where(has_data))
+colnames(df_wk) <- colnames_combined
+
+# In manchen Dateien sind leere Spalten ohne Spaltennamen (NA) enthalten
+df_wk <- df_wk[!is.na(names(df_wk))]
+
+# Entferne Variablen der Vorperiode (ab 2009)
+if (year >= 2009) {
+  df_wk <- df_wk |> 
+  select(-ends_with("_Vorperiode"))
+}
+  
+df_wk <- df_wk |> 
+  rename(wknr = 1, wkname = 2, bundesland = 3, 
+         wahlberechtigte_Erststimmen = 4, wahlberechtigte_Zweitstimmen = 5,
+         waehler_Erststimmen = 6, waehler_Zweitstimmen = 7,
+         ungueltige_Erststimmen = 8, ungueltige_Zweitstimmen = 9,
+         gueltige_Erststimmen = 10, gueltige_Zweitstimmen = 11) |> 
+  filter(!is.na(wknr)) 
+colnames(df_wk) <- str_remove(colnames(df_wk), "_Endgültig")
+
+
+# Long format
+df_wk_long <- df_wk |> 
+  pivot_longer(cols = -c(wknr:gueltige_Zweitstimmen), 
+               names_to = c("partei", "stimme"), names_sep = "_",
+               values_to = "anzahl") |> 
+  pivot_longer(cols = wahlberechtigte_Erststimmen:gueltige_Zweitstimmen,
+               names_to = c("kennzahl", "stimme2"), names_sep = "_",
+               values_to = "anzahl_basis") |>
+  filter(stimme == stimme2) |> 
+  select(-stimme2) |> 
+  mutate(kennzahl = str_to_title(kennzahl)) |> 
+  pivot_wider(
+    names_from = "kennzahl", values_from = "anzahl_basis", values_fn = min
+  ) |> 
+  mutate(anteil = anzahl / Gueltige) |> 
+  relocate(anteil, .before = 7)
+  
+```
+
+### Datenaufbereitung
+
+2021 (und 2017): flache Tabelle
+
+```{r prep-data-2021}
+df_wk_abstand_2021 <- df_wk_2021 |> 
+  # Nur Erststimmen auf Wahlkreisebene
+  filter(gruppenart == "Partei", gebietsart == "Wahlkreis", stimme == 1) |> 
+  select(gebietsnummer, ueg_gebietsnummer, gebietsname, gruppenname, prozent) |> 
+  na.omit() |> 
+  # Erst- und Zweitplatzierte
+  group_by(gebietsnummer) |> 
+  slice_max(order_by = prozent, n = 2, with_ties = FALSE) |> 
+  arrange(-prozent, .by_group = TRUE) |> 
+  # Abstand zum Zweitplatzierten
+  mutate(prozent_zweiter = lead(prozent, default = NULL)) |> 
+  # Den Zweitplatzierten entfernen
+  filter(!is.na(prozent_zweiter)) |> 
+  ungroup() |> 
+  rename(wk_gewinner_partei = gruppenname, prozent_gewinner = prozent) |> 
+  mutate(wk_abstand = prozent_gewinner - prozent_zweiter) |> 
+  mutate(wk_gewinner_partei = case_match(
+    wk_gewinner_partei, 
+    "GRÜNE" ~ "Grüne",
+    "DIE LINKE" ~ "Linke",
+    .default = wk_gewinner_partei
+  ))
+```
+
+Flache Tabellen erst ab 2017, daher andere Aufbereitung
+
+```{r prep-data-1990}
+df_wk_abstand_1990 <- df_wk_1990 |> 
+  filter(!is.na(`Wahlkreis_Nr.`)) |>
+  select(gebietsnummer = `Wahlkreis_Nr.`, gebietsname = Name, bundesland = Land, 
+         waehler = `Wähler`, everything(), 
+         -c(Wahlberechtigte, contains("Gültige"), ends_with("_Zweitstimmen"))) |> 
+  pivot_longer(cols = -c(gebietsnummer, gebietsname, bundesland, waehler), names_to = "partei", values_to = "erststimmen") |> 
+  mutate(
+    partei = str_remove(partei, "_Erststimmen"),
+    prozent = erststimmen / waehler) |> 
+  # Erst- und Zweitplatzierte
+  group_by(gebietsnummer) |> 
+  slice_max(order_by = prozent, n = 2, with_ties = FALSE) |> 
+  arrange(-prozent, .by_group = TRUE) |> 
+  # Abstand zum Zweitplatzierten
+  mutate(prozent_zweiter = lead(prozent, default = NULL)) |> 
+  # Den Zweitplatzierten entfernen
+  filter(!is.na(prozent_zweiter)) |> 
+  ungroup() |> 
+  rename(wk_gewinner_partei = partei, prozent_gewinner = prozent) |> 
+  mutate(wk_abstand = prozent_gewinner - prozent_zweiter) |> 
+  select(-c(waehler, erststimmen)) |> 
+  # Gebietsnummer mit führender 9 sind Bundesländer und Bundesgebiet
+  filter(gebietsnummer < 900)
+
+```
+
+### Visualisierung als Beeswarm-Plot
+
+```{r}
+library(ggbeeswarm)
+
+df_wk_abstand_2021 |> 
+  ggplot(aes(wk_abstand, y = 1)) +
+  geom_quasirandom(
+    aes(fill = wk_gewinner_partei),
+    shape = 21, color = "white", size = 3
+  ) + 
+  scale_x_continuous(limits = c(0, 80)) +
+  scale_fill_manual(values = c("CSU" = "grey40", party_pal)) +
+  labs(
+    title = "Abstand zwischen gewählten Direktkandierenden und<br>
+    Zweitplatzierten 2021",
+    x = "Differenz Erststimmenanteile (%)",
+  ) +
+  theme(
+    legend.position = "bottom",
+    axis.text.y = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+```
+
+## 
+
+Für 1990
+
+```{r}
+library(ggbeeswarm)
+
+df_wk_abstand_1990 |> 
+  ggplot(aes(wk_abstand, y = 1)) +
+  geom_quasirandom(
+    aes(fill = wk_gewinner_partei),
+    shape = 21, color = "white", size = 3
+  ) + 
+  scale_x_continuous(
+    labels = scales::label_percent(), limits = c(0, 0.8)) +
+  scale_fill_manual(values = c("CSU" = "grey40", party_pal)) +
+  labs(
+    title = "Abstand zwischen gewählten Direktkandierenden und<br>
+    Zweitplatzierten 2021",
+    x = "Differenz Erststimmenanteile (%)",
+  ) +
+  theme(
+    legend.position = "bottom",
+    axis.text.y = element_blank(),
+    axis.title.y = element_blank()
+  )
+```
+
+Barrierefreiheit? Sieht aus wie eins der Bilder zur Erkennung von Farbfehlsichtigkeit...
+
+Im Vergleich mit einer früheren BTW ist für die Botschaft ggf. keine Unterscheidung nach Parteien nötig.
