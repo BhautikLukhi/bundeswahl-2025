@@ -253,56 +253,54 @@ dfs_wk_abstand <- map(dfs_wk, prepare_firstvote_data)
 
 ### Visualisierung als Beeswarm-Plot
 
-```{r}
+```{r fig.height=8}
 library(ggbeeswarm)
 
-df_wk_abstand_2021 |> 
+dfs_wk_abstand |> 
+  bind_rows(.id = "wahl") |> 
+  filter(wahl %in% c("1953", "1980", "1994", "2021")) |> 
   ggplot(aes(wk_abstand, y = 1)) +
   geom_quasirandom(
     aes(fill = wk_gewinner_partei),
     shape = 21, color = "white", size = 3
   ) + 
-  scale_x_continuous(limits = c(0, 80)) +
+  scale_x_continuous(limits = c(0, 0.8)) +
   scale_fill_manual(values = c("CSU" = "grey40", party_pal)) +
+  facet_grid(vars(wahl)) + 
   labs(
     title = "Abstand zwischen gewählten Direktkandierenden und<br>
-    Zweitplatzierten 2021",
+    Zweitplatzierten",
     x = "Differenz Erststimmenanteile (%)",
   ) +
   theme(
     legend.position = "bottom",
     axis.text.y = element_blank(),
     axis.title.y = element_blank()
-  )
+  ) 
 
 ```
 
 ## 
 
-Für 1990
-
 ```{r}
-library(ggbeeswarm)
-
-df_wk_abstand_1990 |> 
-  ggplot(aes(wk_abstand, y = 1)) +
-  geom_quasirandom(
-    aes(fill = wk_gewinner_partei),
-    shape = 21, color = "white", size = 3
-  ) + 
-  scale_x_continuous(
-    labels = scales::label_percent(), limits = c(0, 0.8)) +
-  scale_fill_manual(values = c("CSU" = "grey40", party_pal)) +
+dfs_wk_abstand |> 
+  bind_rows(.id = "wahl") |> 
+  group_by(wahl) |> 
+  summarize(
+    anteil_lt10 = mean(wk_abstand < 0.1),
+    anteil_gt30 = mean(wk_abstand > 0.3),
+    anteil_gewinner_gt50 = mean(anteil_gewinner > 0.5)
+    ) |> 
+  ggplot(aes(wahl, group = 1)) +
+  geom_line(aes(y = anteil_lt10, col = "Kleiner 10 %")) +
+  geom_line(aes(y = anteil_gt30, col = "Größer als 30 %"))  +
+  geom_line(aes(y = anteil_gewinner_gt50, 
+                col = "Stimmenanteil Gewinner größer als 50 %"))  +
+  scale_y_continuous(labels = scales::label_percent()) +
   labs(
-    title = "Abstand zwischen gewählten Direktkandierenden und<br>
-    Zweitplatzierten 2021",
-    x = "Differenz Erststimmenanteile (%)",
+    y = "Anteil (%)"
   ) +
-  theme(
-    legend.position = "bottom",
-    axis.text.y = element_blank(),
-    axis.title.y = element_blank()
-  )
+  theme(legend.position = "top")
 ```
 
 Barrierefreiheit? Sieht aus wie eins der Bilder zur Erkennung von Farbfehlsichtigkeit...
