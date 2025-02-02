@@ -203,9 +203,9 @@ dfs_wk <- map(btw_years, load_data_safely)
 ##### Ergebnis auf Fehler prüfen
 
 ```{r}
-dfs_wk |> 
-  transpose() |> 
-  View()
+# dfs_wk |> 
+#   transpose() |> 
+#   View()
 ```
 
 ##### Alle BTW in einem Datensatz
@@ -251,9 +251,11 @@ prepare_firstvote_data <- function(x) {
 dfs_wk_abstand <- map(dfs_wk, prepare_firstvote_data)
 ```
 
-### Visualisierung als Beeswarm-Plot
+### Visualisierung 
 
-```{r fig.height=8}
+#### Beeswarm-Plot
+
+```{r plot-beeswarm, fig.height=8}
 library(ggbeeswarm)
 
 dfs_wk_abstand |> 
@@ -270,6 +272,7 @@ dfs_wk_abstand |>
   labs(
     title = "Abstand zwischen gewählten Direktkandierenden und<br>
     Zweitplatzierten",
+    subtitle = "Jeder Punkt ist ein Wahlkreis",
     x = "Differenz Erststimmenanteile (%)",
   ) +
   theme(
@@ -280,7 +283,50 @@ dfs_wk_abstand |>
 
 ```
 
-## 
+#### Gestapeltes Balkendiagramm: Abstand über Zeit
+
+```{r}
+dfs_wk_abstand |> 
+  bind_rows(.id = "wahl") |> 
+  # Abstand gruppiert
+  arrange(wk_abstand) |> 
+  mutate(wk_abstand_grp = case_when(
+    wk_abstand < 0.02 ~ "Weniger als 2 %",
+    wk_abstand < 0.05 ~ "2 bis unter 5 %",
+    wk_abstand < 0.10 ~ "5 bis unter 10 %",
+    wk_abstand < 0.20 ~ "10 bis unter 20 %",
+    wk_abstand < 0.30 ~ "20 bis unter 30 %",
+    TRUE ~ "30 oder mehr %"),
+    wk_abstand_grp = fct_inorder(wk_abstand_grp),
+    wk_abstand_grp = fct_rev(wk_abstand_grp),
+    wahl = fct_rev(wahl)
+    ) |> 
+  arrange(wahl, wknr) |>
+  count(wahl, wk_abstand_grp, name = "n_wahlkreise") |> 
+  group_by(wahl) |> 
+  mutate(anteil = n_wahlkreise / sum(n_wahlkreise)) |> 
+  ungroup() |> 
+  ggplot(aes(anteil, wahl, fill = wk_abstand_grp)) +
+  geom_col(col = "white") +
+  scale_x_continuous(
+    labels = scales::label_percent(), position = "top",
+    expand = expansion(mult = c(0, 0.02))) +
+  scale_fill_brewer() +
+  labs(
+    title = "Abstand zwischen gewählten Direktkandierenden und<br>
+    Zweitplatzierten",
+    x = "Anteil Wahlkreise (%)",
+    y = NULL
+  ) +
+  theme(
+    legend.position = "top",
+    legend.justification = "left",
+    panel.grid = element_blank()
+  ) 
+
+```
+
+#### Liniendiagramm verschiedene Wahlausgänge
 
 ```{r}
 dfs_wk_abstand |> 
@@ -292,17 +338,17 @@ dfs_wk_abstand |>
     anteil_gewinner_gt50 = mean(anteil_gewinner > 0.5)
     ) |> 
   ggplot(aes(wahl, group = 1)) +
-  geom_line(aes(y = anteil_lt10, col = "Kleiner 10 %")) +
-  geom_line(aes(y = anteil_gt30, col = "Größer als 30 %"))  +
+  geom_line(aes(y = anteil_lt10, col = "Kleiner 10 %"), linewidth = 1) +
+  geom_line(aes(y = anteil_gt30, col = "Größer als 30 %"), linewidth = 1)  +
   geom_line(aes(y = anteil_gewinner_gt50, 
-                col = "Stimmenanteil Gewinner größer als 50 %"))  +
+                col = "Stimmenanteil Gewinner größer als 50 %"), linewidth = 1)  +
   scale_y_continuous(labels = scales::label_percent()) +
+  scale_color_manual(values = color_pal[2:4]) +
   labs(
-    y = "Anteil (%)"
+    title = "Mehr Wahlkreise mit knappen Ausgang und weniger Wahlkreise,<br>die mit absoluter Mehrheit gewonnen werden",
+    x = NULL,
+    y = "Anteil (%)",
+    col = "Wahlausgang"
   ) +
   theme(legend.position = "top")
 ```
-
-Barrierefreiheit? Sieht aus wie eins der Bilder zur Erkennung von Farbfehlsichtigkeit...
-
-Im Vergleich mit einer früheren BTW ist für die Botschaft ggf. keine Unterscheidung nach Parteien nötig.
