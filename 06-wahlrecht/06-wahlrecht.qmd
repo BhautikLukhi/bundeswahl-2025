@@ -79,7 +79,8 @@ load_data <- function(year) {
   ## Ab 2002 haben die Datensätze eine 3. Kopfzeile: "Endgültig,Vorperiode"
   df_wk_head <- read_csv2(filename, 
                           locale = locale("de", encoding = encoding), 
-                          skip = skip_rows, n_max = 100, col_names = FALSE,
+                          skip = skip_rows, # n_max = 100, 
+                          col_names = FALSE,
                           show_col_types = FALSE)
   
   # Leere Spalten am Ende entfernen
@@ -106,7 +107,7 @@ load_data <- function(year) {
   # Daten vollständig einlesen
   df_wk <- read_csv2(filename, skip = skip_rows + 2, col_names = FALSE,
                      show_col_types = FALSE)
-  df_wk <- select(df_wk, where(has_data))
+  # df_wk <- select(df_wk, where(has_data))
   colnames(df_wk) <- colnames_combined
   
   # In manchen Dateien sind leere Spalten ohne Spaltennamen (NA) enthalten
@@ -127,13 +128,23 @@ load_data <- function(year) {
              ungueltige = 6,
              gueltige = 7) |> 
       filter(!is.na(wknr)) 
+  } else if (year > 1949 & year < 2005) {
+      df_wk <- df_wk |> 
+        rename(wknr = 1, wkname = 2, bundesland = 3, 
+               wahlberechtigte = 4,
+               waehler = 5,
+               ungueltige = 6, ungueltige_Zweitstimmen = 7,
+               gueltige_Erststimmen = 8, gueltige_Zweitstimmen = 9) |> 
+        filter(!is.na(wknr)) 
   } else {
     df_wk <- df_wk |> 
       rename(wknr = 1, wkname = 2, bundesland = 3, 
-             wahlberechtigte_Erststimmen = 4, wahlberechtigte_Zweitstimmen = 5,
-             waehler_Erststimmen = 6, waehler_Zweitstimmen = 7,
-             ungueltige_Erststimmen = 8, ungueltige_Zweitstimmen = 9,
+             wahlberechtigte = 4, wahlberechtigte_Zweitstimmen = 5,
+             waehler = 6, waehler_Zweitstimmen = 7,
+             ungueltige = 8, ungueltige_Zweitstimmen = 9,
              gueltige_Erststimmen = 10, gueltige_Zweitstimmen = 11) |> 
+      select(-c(wahlberechtigte_Zweitstimmen, waehler_Zweitstimmen, 
+                ungueltige_Zweitstimmen)) |> 
       filter(!is.na(wknr)) 
     colnames(df_wk) <- str_remove(colnames(df_wk), "_Endgültig")  
   }
@@ -149,22 +160,23 @@ load_data <- function(year) {
                    values_to = "anzahl") |> 
       pivot_longer(cols = wahlberechtigte:gueltige,
                    names_to = c("kennzahl", "stimme2"), names_sep = "_",
-                   values_to = "anzahl_basis") 
+                   values_to = "anzahl_basis")
   } else {
     df_wk_long <- df_wk |> 
       pivot_longer(cols = -c(wknr:gueltige_Zweitstimmen), 
                    names_to = c("partei", "stimme"), names_sep = "_",
                    values_to = "anzahl") |> 
-      pivot_longer(cols = wahlberechtigte_Erststimmen:gueltige_Zweitstimmen,
+      pivot_longer(cols = wahlberechtigte:gueltige_Zweitstimmen,
                    names_to = c("kennzahl", "stimme2"), names_sep = "_",
                    values_to = "anzahl_basis") |> 
-    filter(stimme == stimme2)
+      filter(is.na(stimme2) | stimme == stimme2)
   }
   
   df_wk_long <- df_wk_long |> 
     select(-stimme2) |> 
     mutate(
-      across(c(wknr, bundesland), as.character),
+      wknr = as.integer(wknr),
+      bundesland = as.character(bundesland),
       kennzahl = kennzahl) |> 
     pivot_wider(
       names_from = "kennzahl", values_from = "anzahl_basis", 
@@ -206,60 +218,37 @@ df_wk_alle <- bind_rows(dfs_wk, .id = "wahl")
 
 ### Datenaufbereitung
 
-2021 (und 2017): flache Tabelle
-
-```{r prep-data-2021}
-df_wk_abstand_2021 <- df_wk_2021 |> 
-  # Nur Erststimmen auf Wahlkreisebene
-  filter(gruppenart == "Partei", gebietsart == "Wahlkreis", stimme == 1) |> 
-  select(gebietsnummer, ueg_gebietsnummer, gebietsname, gruppenname, prozent) |> 
-  na.omit() |> 
-  # Erst- und Zweitplatzierte
-  group_by(gebietsnummer) |> 
-  slice_max(order_by = prozent, n = 2, with_ties = FALSE) |> 
-  arrange(-prozent, .by_group = TRUE) |> 
-  # Abstand zum Zweitplatzierten
-  mutate(prozent_zweiter = lead(prozent, default = NULL)) |> 
-  # Den Zweitplatzierten entfernen
-  filter(!is.na(prozent_zweiter)) |> 
-  ungroup() |> 
-  rename(wk_gewinner_partei = gruppenname, prozent_gewinner = prozent) |> 
-  mutate(wk_abstand = prozent_gewinner - prozent_zweiter) |> 
-  mutate(wk_gewinner_partei = case_match(
-    wk_gewinner_partei, 
-    "GRÜNE" ~ "Grüne",
-    "DIE LINKE" ~ "Linke",
-    .default = wk_gewinner_partei
-  ))
+```{r prep-data-function}
+prepare_firstvote_data <- function(x) {
+  
+  x |> 
+    # Nur Erststimmen auf Wahlkreisebene
+    filter(stimme == "Erststimmen" & wknr < 900 & bundesland != "99") |> 
+    # filter(stimme == "Erststimmen") |> 
+    select(wknr, wkname, bundesland, partei, anteil) |> 
+    na.omit() |> 
+    # Erst- und Zweitplatzierte
+    group_by(wknr) |> 
+    slice_max(order_by = anteil, n = 2, with_ties = FALSE) |> 
+    arrange(-anteil, .by_group = TRUE) |> 
+    # Abstand zum Zweitplatzierten
+    mutate(anteil_zweiter = lead(anteil, default = NULL)) |> 
+    # Den Zweitplatzierten entfernen
+    filter(!is.na(anteil_zweiter)) |> 
+    ungroup() |> 
+    rename(wk_gewinner_partei = partei, anteil_gewinner = anteil) |> 
+    mutate(wk_abstand = anteil_gewinner - anteil_zweiter) |> 
+    mutate(wk_gewinner_partei = case_match(
+      wk_gewinner_partei, 
+      "GRÜNE" ~ "Grüne",
+      "DIE LINKE" ~ "Linke",
+      .default = wk_gewinner_partei
+    ))
+}
 ```
 
-Flache Tabellen erst ab 2017, daher andere Aufbereitung
-
-```{r prep-data-1990}
-df_wk_abstand_1990 <- df_wk_1990 |> 
-  filter(!is.na(`Wahlkreis_Nr.`)) |>
-  select(gebietsnummer = `Wahlkreis_Nr.`, gebietsname = Name, bundesland = Land, 
-         waehler = `Wähler`, everything(), 
-         -c(Wahlberechtigte, contains("Gültige"), ends_with("_Zweitstimmen"))) |> 
-  pivot_longer(cols = -c(gebietsnummer, gebietsname, bundesland, waehler), names_to = "partei", values_to = "erststimmen") |> 
-  mutate(
-    partei = str_remove(partei, "_Erststimmen"),
-    prozent = erststimmen / waehler) |> 
-  # Erst- und Zweitplatzierte
-  group_by(gebietsnummer) |> 
-  slice_max(order_by = prozent, n = 2, with_ties = FALSE) |> 
-  arrange(-prozent, .by_group = TRUE) |> 
-  # Abstand zum Zweitplatzierten
-  mutate(prozent_zweiter = lead(prozent, default = NULL)) |> 
-  # Den Zweitplatzierten entfernen
-  filter(!is.na(prozent_zweiter)) |> 
-  ungroup() |> 
-  rename(wk_gewinner_partei = partei, prozent_gewinner = prozent) |> 
-  mutate(wk_abstand = prozent_gewinner - prozent_zweiter) |> 
-  select(-c(waehler, erststimmen)) |> 
-  # Gebietsnummer mit führender 9 sind Bundesländer und Bundesgebiet
-  filter(gebietsnummer < 900)
-
+```{r prep-data}
+dfs_wk_abstand <- map(dfs_wk, prepare_firstvote_data)
 ```
 
 ### Visualisierung als Beeswarm-Plot
