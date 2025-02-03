@@ -253,9 +253,9 @@ dfs_wk_abstand <- map(dfs_wk, prepare_firstvote_data)
 
 ### Visualisierung 
 
-#### Beeswarm-Plot
+#### Beeswarm-Plot Abstand
 
-```{r plot-beeswarm, fig.height=8}
+```{r plot-beeswarm-abstand, fig.height=8}
 library(ggbeeswarm)
 
 dfs_wk_abstand |> 
@@ -279,6 +279,97 @@ dfs_wk_abstand |>
     legend.position = "bottom",
     axis.text.y = element_blank(),
     axis.title.y = element_blank()
+  ) 
+
+```
+
+
+#### Beeswarm-Plot Erststimmen Wahlkreisgewinner
+
+```{r prep-wk-abstand}
+
+df_wk_abstand <- dfs_wk_abstand |> 
+  bind_rows(.id = "wahl") |> 
+  mutate(
+    wk_gewinner_partei = case_match(
+      wk_gewinner_partei,
+      "Christlich Demokratische Union Deutschlands" ~ "CDU",
+      "Christlich-Soziale Union in Bayern e.V." ~ "CSU",
+      "Sozialdemokratische Partei Deutschlands" ~ "SPD",
+      "BÜNDNIS 90/DIE GRÜNEN" ~ "Grüne",
+      "Linke" ~ "Linke",
+      "Alternative für Deutschland" ~ "AfD",
+      .default = wk_gewinner_partei
+    ),
+    wk_gewinner_partei = fct_infreq(wk_gewinner_partei)
+  ) 
+```
+
+
+##### Mit den wenigsten Stimmen erlangte Direktmandate
+
+```{r}
+
+df_wk_abstand |> 
+  arrange(anteil_gewinner) |> 
+  select(wahl, anteil_gewinner, wkname, wk_gewinner_partei) |> 
+  head(10)
+
+```
+
+
+```{r plot-beeswarm-erststimmen}
+library(ggbeeswarm)
+
+df_wk_abstand |> 
+  filter(wahl  == "2021") |> 
+  ggplot(aes(anteil_gewinner, y = 1)) +
+  geom_quasirandom(
+    aes(fill = wk_gewinner_partei, shape = wk_gewinner_partei),
+    color = "white", size = 3.5
+  ) + 
+  annotate(
+    "text",
+    x = c(0.15, 0.45),
+    y = 1.2,
+    label = c(
+      "Diese 5 Direktmandate wurden\nmit den geringsten Stimmen-\nanteilen in der Geschichte der\nBundesrepublik erlangt.",
+      "Einem einzigen Direktkandidaten\ngelang es, mehr als 50 % der\nStimmen zu erreichen"),
+    family = "Roboto Condensed", size = 3.5, hjust = 0, lineheight = 0.9
+  ) +
+  annotate(
+    GeomCurve,
+    x = c(0.52, 0.23), 
+    xend = c(0.528, 0.23),
+    y = 1.15, 
+    yend = 1.03,
+    curvature = -0.2, linewidth = 0.2, 
+    arrow = arrow(angle = 20, length = unit(0.25, "cm"))
+  ) +
+  ggforce::geom_ellipse(
+    aes(x0 = 0.205, y0 = 1, a = 0.04, b = 0.03, angle = pi / 3),
+    linewidth = 0.2, linetype = "dashed",
+  ) + 
+  scale_x_continuous(labels = scales::label_percent()) +
+  scale_fill_manual(values = c("CSU" = "grey40", party_pal)) +
+  scale_shape_manual(values = c("CDU" = 21, "SPD" = 21,
+                                "CSU" = 22, "Linke" = 23, "Grüne" = 24, "AfD" = 25)) +
+  guides(
+    fill = guide_legend(nrow = 1, override.aes = list(size = 5)),
+    shape = guide_legend(nrow = 1, override.aes = list(size = 5))
+  ) +
+  labs(
+    title = "Erststimmenanteile der Wahlkreisgewinner 2021",
+    subtitle = "Jeder Punkt ist ein Wahlkreis",
+    x = "Erststimmenanteil (%)",
+    fill = NULL, shape = NULL
+  ) +
+  theme(
+    legend.position = "bottom",
+    axis.text.y = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank()
   ) 
 
 ```
@@ -328,7 +419,7 @@ dfs_wk_abstand |>
 
 #### Liniendiagramm verschiedene Wahlausgänge
 
-```{r}
+```{r plot-line-wahlausgaenge}
 dfs_wk_abstand |> 
   bind_rows(.id = "wahl") |> 
   group_by(wahl) |> 
@@ -351,4 +442,68 @@ dfs_wk_abstand |>
     col = "Wahlausgang"
   ) +
   theme(legend.position = "top")
+```
+
+#### Liniendiagramm verschiedene Wahlausgänge
+
+```{r plot-}
+dfs_wk_abstand |> 
+  bind_rows(.id = "wahl") |> 
+  mutate(wahl = as.numeric(wahl)) |> 
+  group_by(wahl) |> 
+  summarize(
+    mean_anteil_gewinner = mean(anteil_gewinner),
+    min_anteil_gewinner = min(anteil_gewinner),
+    max_anteil_gewinner = max(anteil_gewinner),
+    pct10_anteil_gewinner = quantile(anteil_gewinner, probs = 0.1),
+    pct90_anteil_gewinner = quantile(anteil_gewinner, probs = 0.9)
+    ) |>
+  ggplot(aes(wahl, mean_anteil_gewinner, group = 1)) +
+  geom_ribbon(
+    aes(ymin = min_anteil_gewinner, ymax = max_anteil_gewinner),
+    fill = alpha(color_pal[2], 0.1), color = color_pal[2],
+    linetype = "dashed", linewidth = 0.2) +
+  geom_ribbon(
+    aes(ymin = pct10_anteil_gewinner, ymax = pct90_anteil_gewinner),
+    fill = alpha(color_pal[2], 0.2), color = color_pal[2],
+    linetype = "dashed", linewidth = 0.2) +
+  geom_line(
+    color = color_pal[1], linewidth = 1.2) +
+  annotate(
+    "text",
+    x = c(1970, 1990, 2010),
+    y = c(0.32, 0.22, 0.13),
+    label = c("Durchschnitt", "90 % aller Wahlkreise\nliegen in diesem Bereich",
+          "Alle Wahlkreise"),
+    family = "Roboto Condensed", hjust = 0, size = 4, lineheight = 0.9,
+    vjust = 1
+  ) +
+  annotate(
+    GeomCurve,
+    x = c(1970, 1990, 2010),
+    xend = c(1970, 1990, 2010),
+    y = c(0.328, 0.228, 0.138),
+    yend = c(0.55, 0.43, 0.27),
+    curvature = -0.2, linewidth = 0.2,
+    arrow = arrow(angle = 20, length = unit(0.25, "cm"))
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2020, 10),
+    expand = expansion(mult = c(0, 0.02))) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  scale_color_manual(values = color_pal[2:4]) +
+  coord_cartesian(ylim = c(0, NA)) +
+  labs(
+    title = "Erststimmen-Anteil der Wahlkreisgewinner ist von 55 %<br>
+    in den 1980ern auf 33 % in 2021 gesunken",
+    subtitle = "Anteil der Erststimmen (%)",
+    caption = "Daten: Bundeswahlleiterin.
+    Visualisierung: Ansgar Wolsing & Thorsten Faas",
+    x = NULL, y = NULL,
+    # y = "Anteil (%)",
+    col = "Wahlausgang"
+  ) +
+  theme(
+    axis.text.x = element_text(family = "Roboto Condensed SemiBold")
+  )
 ```
