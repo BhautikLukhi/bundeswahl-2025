@@ -11,6 +11,8 @@ format:
 library(tidyverse)
 library(ggtext)
 library(here)
+library(ggbeeswarm)
+library(patchwork)
 
 knitr::opts_chunk$set(dev = "ragg_png")
 
@@ -191,7 +193,7 @@ load_data <- function(year) {
 
 #### Laden
 
-```{r load-data, message=FALSE, warning=FALSE}
+```{r load-data, cache=TRUE, message=FALSE, warning=FALSE}
 
 btw_years <- c(1949, 1953, 1957, 1961, 1965, 1969, 1972, 1976, 1980, 1983, 1987, 1990,
            1994, 1998, 2002, 2005, 2009, 2013, 2017, 2021)
@@ -210,7 +212,7 @@ dfs_wk <- map(btw_years, load_data_safely)
 
 ##### Alle BTW in einem Datensatz
 
-```{r load-data-2, message=FALSE, warning=FALSE, output=FALSE}
+```{r load-data-2, cache=TRUE, message=FALSE, warning=FALSE, output=FALSE}
 dfs_wk <- map(btw_years, load_data)
 dfs_wk <- set_names(dfs_wk, btw_years)
 df_wk_alle <- bind_rows(dfs_wk, .id = "wahl")
@@ -247,7 +249,7 @@ prepare_firstvote_data <- function(x) {
 }
 ```
 
-```{r prep-data}
+```{r prep-data, cache=TRUE}
 dfs_wk_abstand <- map(dfs_wk, prepare_firstvote_data)
 ```
 
@@ -294,10 +296,15 @@ df_wk_abstand <- dfs_wk_abstand |>
     wk_gewinner_partei = case_match(
       wk_gewinner_partei,
       "Christlich Demokratische Union Deutschlands" ~ "CDU",
+      "C D U" ~ "CDU",
       "Christlich-Soziale Union in Bayern e.V." ~ "CSU",
+      "C S U" ~ "CSU",
       "Sozialdemokratische Partei Deutschlands" ~ "SPD",
+      "S P D" ~ "SPD",
       "BÜNDNIS 90/DIE GRÜNEN" ~ "Grüne",
       "Linke" ~ "Linke",
+      "Die Linke." ~ "Linke",
+      "PDS" ~ "Linke",
       "Alternative für Deutschland" ~ "AfD",
       .default = wk_gewinner_partei
     ),
@@ -318,10 +325,9 @@ df_wk_abstand |>
 ```
 
 
-```{r plot-beeswarm-erststimmen}
-library(ggbeeswarm)
+```{r plot-beeswarm-erststimmen-2021}
 
-df_wk_abstand |> 
+p_beeswarm_2021 <- df_wk_abstand |> 
   filter(wahl  == "2021") |> 
   ggplot(aes(anteil_gewinner, y = 1)) +
   geom_quasirandom(
@@ -330,8 +336,10 @@ df_wk_abstand |>
   ) + 
   annotate(
     "text",
-    x = c(0.15, 0.45),
-    y = 1.2,
+    # x = c(0.15, 0.45),
+    # y = 1.2,
+    x = c(0.1, 0.45),
+    y = 1.25,
     label = c(
       "Diese 5 Direktmandate wurden\nmit den geringsten Stimmen-\nanteilen in der Geschichte der\nBundesrepublik erlangt.",
       "Einem einzigen Direktkandidaten\ngelang es, mehr als 50 % der\nStimmen zu erreichen"),
@@ -339,7 +347,8 @@ df_wk_abstand |>
   ) +
   annotate(
     GeomCurve,
-    x = c(0.52, 0.23), 
+    # x = c(0.52, 0.23), 
+    x = c(0.52, 0.21), 
     xend = c(0.528, 0.23),
     y = 1.15, 
     yend = 1.03,
@@ -354,13 +363,15 @@ df_wk_abstand |>
   scale_fill_manual(values = c("CSU" = "grey40", party_pal)) +
   scale_shape_manual(values = c("CDU" = 21, "SPD" = 21,
                                 "CSU" = 22, "Linke" = 23, "Grüne" = 24, "AfD" = 25)) +
+  coord_cartesian(xlim = c(0.1, 0.75)) +
   guides(
     fill = guide_legend(nrow = 1, override.aes = list(size = 5)),
     shape = guide_legend(nrow = 1, override.aes = list(size = 5))
   ) +
   labs(
-    title = "Erststimmenanteile der Wahlkreisgewinner 2021",
-    subtitle = "Jeder Punkt ist ein Wahlkreis",
+    # title = "Erststimmenanteile der Wahlkreisgewinner 2021",
+    # subtitle = "Jeder Punkt ist ein Wahlkreis",
+    title = "2021",
     x = "Erststimmenanteil (%)",
     fill = NULL, shape = NULL
   ) +
@@ -372,7 +383,107 @@ df_wk_abstand |>
     panel.grid.minor.y = element_blank()
   ) 
 
+p_beeswarm_2021
+
 ```
+
+
+
+
+```{r plot-beeswarm-erststimmen-1980}
+
+p_beeswarm_1980 <- df_wk_abstand |> 
+  filter(wahl  == "1980") |>
+  ggplot(aes(anteil_gewinner, y = 1)) +
+  geom_quasirandom(
+    aes(fill = wk_gewinner_partei, shape = wk_gewinner_partei),
+    color = "white", size = 3.5
+  ) + 
+  scale_x_continuous(labels = scales::label_percent()) +
+  scale_fill_manual(values = c("CSU" = "grey40", party_pal)) +
+  scale_shape_manual(values = c("CDU" = 21, "SPD" = 21,
+                                "CSU" = 22, "Linke" = 23, "Grüne" = 24, 
+                                "AfD" = 25)) +
+  coord_cartesian(xlim = c(0.1, 0.75)) +
+  guides(
+    fill = guide_legend(nrow = 1, override.aes = list(size = 5)),
+    shape = guide_legend(nrow = 1, override.aes = list(size = 5))
+  ) +
+  labs(
+    # title = "Erststimmenanteile der Wahlkreisgewinner 1980",
+    title = "1980",
+    # subtitle = "Jeder Punkt ist ein Wahlkreis",
+    x = "Erststimmenanteil (%)",
+    fill = NULL, shape = NULL
+  ) +
+  theme(
+    legend.position = "bottom",
+    axis.text.y = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank()
+  ) 
+
+p_beeswarm_1980
+```
+#### Beeswarms 2021 und 1980 kombiniert
+
+```{r plot-beeswarm-2021-1980-kombi, fig.width=6, fig.height=6}
+
+p_beeswarm_1980 / 
+  p_beeswarm_2021 +
+  plot_annotation(
+    title = "Erststimmenanteile der Wahlkreisgewinner",
+    caption = "Daten: Bundeswahlleiterin.
+    Visualisierung: Ansgar Wolsing & Thorsten Faas",)
+
+```
+
+
+
+```{r plot-beeswarm-erststimmen-alle, fig.width = 8, fig.height=18}
+library(ggbeeswarm)
+
+df_wk_abstand |> 
+  ggplot(aes(anteil_gewinner, y = 1)) +
+  geom_quasirandom(
+    aes(fill = wk_gewinner_partei
+        #, shape = wk_gewinner_partei
+        ),
+    color = "white", size = 2,
+    shape = 21
+  ) + 
+  scale_x_continuous(labels = scales::label_percent()) +
+  scale_fill_manual(values = c("CSU" = "grey40", party_pal, "DP" = "grey80", "Zentrum" = "grey90")) +
+  # scale_shape_manual(values = c("CDU" = 21, "SPD" = 21,
+  #                               "CSU" = 22, "Linke" = 23, "Grüne" = 24, 
+  #                               "AfD" = 25)) +
+  # coord_cartesian(xlim = c(0, NA)) +
+  facet_wrap(vars(wahl), ncol = 3, axes = "all_x", axis.labels = "all_x") +
+  guides(
+    fill = guide_legend(
+      # nrow = 1, 
+      override.aes = list(size = 5)),
+    shape = guide_legend(nrow = 1, override.aes = list(size = 5))
+  ) +
+  labs(
+    title = "Erststimmenanteile der Wahlkreisgewinner",
+    subtitle = "Jeder Punkt ist ein Wahlkreis",
+    x = "Erststimmenanteil (%)",
+    fill = NULL, shape = NULL
+  ) +
+  theme(
+    legend.position = "bottom",
+    axis.text.y = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    strip.text = element_text(family = "Roboto Condensed SemiBold", size = 14)
+  ) 
+
+```
+
+
 
 #### Gestapeltes Balkendiagramm: Abstand über Zeit
 
