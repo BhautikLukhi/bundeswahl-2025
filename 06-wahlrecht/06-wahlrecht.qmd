@@ -332,27 +332,25 @@ p_beeswarm_2021 <- df_wk_abstand |>
   ggplot(aes(anteil_gewinner, y = 1)) +
   geom_quasirandom(
     aes(fill = wk_gewinner_partei, shape = wk_gewinner_partei),
-    color = "white", size = 3.5
+    color = "white", size = 2
   ) + 
   annotate(
     "text",
-    # x = c(0.15, 0.45),
-    # y = 1.2,
-    x = c(0.1, 0.45),
-    y = 1.25,
+    x = c(0.0, 0.45),
+    y = c(1.24, 1.28),
     label = c(
-      "Diese 5 Direktmandate wurden\nmit den geringsten Stimmen-\nanteilen in der Geschichte der\nBundesrepublik erlangt.",
-      "Einem einzigen Direktkandidaten\ngelang es, mehr als 50 % der\nStimmen zu erreichen"),
-    family = "Roboto Condensed", size = 3.5, hjust = 0, lineheight = 0.9
+      "Diese fünf Direktmandate\nwurden mit den geringsten\nStimmenanteilen in der\nGeschichte der Bundes-\nrepublik gewonnen.",
+      "Nur ein einziger Direktkandidat\nholte mehr als 50 Prozent\n(Wahlkreis Aurich - Emden, SPD)"),
+    family = "Roboto Condensed", size = 4.5, hjust = 0, lineheight = 0.9
   ) +
   annotate(
     GeomCurve,
-    # x = c(0.52, 0.23), 
-    x = c(0.52, 0.21), 
-    xend = c(0.528, 0.23),
-    y = 1.15, 
-    yend = 1.03,
-    curvature = -0.2, linewidth = 0.2, 
+    x = c(0.52, 0.13), 
+    xend = c(0.528, 0.17),
+    y = c(1.15, 1.06), 
+    yend = c(1.03, 1),
+    curvature = 0.2, 
+    linewidth = 0.2, 
     arrow = arrow(angle = 20, length = unit(0.25, "cm"))
   ) +
   ggforce::geom_ellipse(
@@ -363,14 +361,12 @@ p_beeswarm_2021 <- df_wk_abstand |>
   scale_fill_manual(values = c("CSU" = "grey40", party_pal)) +
   scale_shape_manual(values = c("CDU" = 21, "SPD" = 21,
                                 "CSU" = 22, "Linke" = 23, "Grüne" = 24, "AfD" = 25)) +
-  coord_cartesian(xlim = c(0.1, 0.75)) +
+  coord_cartesian(xlim = c(0.05, 0.75), clip = "off") +
   guides(
     fill = guide_legend(nrow = 1, override.aes = list(size = 5)),
     shape = guide_legend(nrow = 1, override.aes = list(size = 5))
   ) +
   labs(
-    # title = "Erststimmenanteile der Wahlkreisgewinner 2021",
-    # subtitle = "Jeder Punkt ist ein Wahlkreis",
     title = "2021",
     x = "Erststimmenanteil (%)",
     fill = NULL, shape = NULL
@@ -386,6 +382,13 @@ p_beeswarm_2021 <- df_wk_abstand |>
 p_beeswarm_2021
 
 ```
+```{r}
+df_wk_abstand |> 
+  filter(wahl  == "1980") |>
+  summarize(
+    mean(anteil_gewinner),
+    mean(anteil_gewinner > 0.5))
+```
 
 
 
@@ -397,23 +400,38 @@ p_beeswarm_1980 <- df_wk_abstand |>
   ggplot(aes(anteil_gewinner, y = 1)) +
   geom_quasirandom(
     aes(fill = wk_gewinner_partei, shape = wk_gewinner_partei),
-    color = "white", size = 3.5
+    color = "white", size = 2
   ) + 
+  annotate(
+    "text",
+    x = 0.12,
+    y = 1,
+    label = "Wahlkreisgewinner mussten\nnoch über 40 Prozent holen.\n63 Prozent der Wahlkreise\nwurden mit absoluter\nMehrheit gewonnen.",
+    family = "Roboto Condensed", size = 4.5, hjust = 0, lineheight = 0.9
+  ) +
+  # annotate(
+  #   GeomCurve,
+  #   x = 0.36, 
+  #   xend = 0.41,
+  #   y = 0.95, 
+  #   yend = 0.95,
+  #   curvature = 0.2, linewidth = 0.2, 
+  #   arrow = arrow(angle = 20, length = unit(0.25, "cm"))
+  # ) +
   scale_x_continuous(labels = scales::label_percent()) +
   scale_fill_manual(values = c("CSU" = "grey40", party_pal)) +
   scale_shape_manual(values = c("CDU" = 21, "SPD" = 21,
                                 "CSU" = 22, "Linke" = 23, "Grüne" = 24, 
                                 "AfD" = 25)) +
-  coord_cartesian(xlim = c(0.1, 0.75)) +
+  coord_cartesian(xlim = c(0.05, 0.75), clip = "off") +
   guides(
-    fill = guide_legend(nrow = 1, override.aes = list(size = 5)),
-    shape = guide_legend(nrow = 1, override.aes = list(size = 5))
+    fill = "none",
+    shape = "none"
   ) +
   labs(
-    # title = "Erststimmenanteile der Wahlkreisgewinner 1980",
     title = "1980",
-    # subtitle = "Jeder Punkt ist ein Wahlkreis",
-    x = "Erststimmenanteil (%)",
+    # x = "Erststimmenanteil (%)",
+    x = NULL,
     fill = NULL, shape = NULL
   ) +
   theme(
@@ -428,7 +446,7 @@ p_beeswarm_1980
 ```
 #### Beeswarms 2021 und 1980 kombiniert
 
-```{r plot-beeswarm-2021-1980-kombi, fig.width=6, fig.height=6}
+```{r plot-beeswarm-2021-1980-kombi, fig.width=6, fig.height=7.2}
 
 p_beeswarm_1980 / 
   p_beeswarm_2021 +
@@ -557,7 +575,7 @@ dfs_wk_abstand |>
 
 #### Liniendiagramm verschiedene Wahlausgänge
 
-```{r plot-}
+```{r plot-erststimmen-mittelwert}
 dfs_wk_abstand |> 
   bind_rows(.id = "wahl") |> 
   mutate(wahl = as.numeric(wahl)) |> 
