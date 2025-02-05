@@ -253,7 +253,7 @@ prepare_firstvote_data <- function(x) {
 dfs_wk_abstand <- map(dfs_wk, prepare_firstvote_data)
 ```
 
-### Visualisierung 
+### Visualisierung
 
 #### Beeswarm-Plot Abstand
 
@@ -285,7 +285,6 @@ dfs_wk_abstand |>
 
 ```
 
-
 #### Beeswarm-Plot Erststimmen Wahlkreisgewinner
 
 ```{r prep-wk-abstand}
@@ -312,7 +311,6 @@ df_wk_abstand <- dfs_wk_abstand |>
   ) 
 ```
 
-
 ##### Mit den wenigsten Stimmen erlangte Direktmandate
 
 ```{r}
@@ -323,7 +321,6 @@ df_wk_abstand |>
   head(10)
 
 ```
-
 
 ```{r plot-beeswarm-erststimmen-2021}
 
@@ -373,6 +370,7 @@ p_beeswarm_2021 <- df_wk_abstand |>
   ) +
   theme(
     legend.position = "bottom",
+    axis.text.x = element_text(family = "Roboto Condensed SemiBold"),
     axis.text.y = element_blank(),
     axis.title.y = element_blank(),
     panel.grid.major.y = element_blank(),
@@ -382,6 +380,7 @@ p_beeswarm_2021 <- df_wk_abstand |>
 p_beeswarm_2021
 
 ```
+
 ```{r}
 df_wk_abstand |> 
   filter(wahl  == "1980") |>
@@ -389,9 +388,6 @@ df_wk_abstand |>
     mean(anteil_gewinner),
     mean(anteil_gewinner > 0.5))
 ```
-
-
-
 
 ```{r plot-beeswarm-erststimmen-1980}
 
@@ -436,6 +432,7 @@ p_beeswarm_1980 <- df_wk_abstand |>
   ) +
   theme(
     legend.position = "bottom",
+    axis.text.x = element_text(family = "Roboto Condensed SemiBold"),
     axis.text.y = element_blank(),
     axis.title.y = element_blank(),
     panel.grid.major.y = element_blank(),
@@ -444,6 +441,7 @@ p_beeswarm_1980 <- df_wk_abstand |>
 
 p_beeswarm_1980
 ```
+
 #### Beeswarms 2021 und 1980 kombiniert
 
 ```{r plot-beeswarm-2021-1980-kombi, fig.width=6, fig.height=7.2}
@@ -456,8 +454,6 @@ p_beeswarm_1980 /
     Visualisierung: Ansgar Wolsing & Thorsten Faas",)
 
 ```
-
-
 
 ```{r plot-beeswarm-erststimmen-alle, fig.width = 8, fig.height=18}
 library(ggbeeswarm)
@@ -500,8 +496,6 @@ df_wk_abstand |>
   ) 
 
 ```
-
-
 
 #### Gestapeltes Balkendiagramm: Abstand über Zeit
 
