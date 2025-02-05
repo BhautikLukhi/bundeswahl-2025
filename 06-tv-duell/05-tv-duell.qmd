@@ -60,25 +60,15 @@ df_skalo |>
 ```{r plot-skalo-2, fig.width = 7.5, fig.height=5}
 df_skalo |> 
   mutate(wahl_fct = factor(wahl)) |> 
-  # select(-quelle) |> 
-  # nest(data = c(-wahl)) |> 
-  # mutate(wahl_id = row_number()) |> 
-  # mutate(
-  #   border_xmin = wahl - (wahl - lag(wahl, default = 1976)) / 2,
-  #   border_xmax = wahl + (lead(wahl, default = 2029) - wahl) / 2
-  #        ) |> 
-  # unnest(cols = data) |> 
   ggplot(aes(wahl_fct, bewertung, fill = partei)) +
-  # geom_rect(
-  #   data = ~filter(., wahl_id %% 2 == 0),
-  #   aes(xmin = border_xmin, xmax = border_xmax,
-  #       ymin = -Inf, ymax = Inf
-  #   ), fill = alpha("grey85", 0.2)
-  # ) +
   geom_vline(
     aes(xintercept = wahl_fct), 
     linewidth = 9, color = alpha("grey80", 0.3)) +
   geom_hline(aes(yintercept = 0), linewidth = 0.5) +
+  geom_line(
+    aes(group = kandidat),
+    linetype = "dashed", linewidth = 0.3, col = "grey50"
+  ) +
   geom_point(
     data = ~filter(., wahl < 2025),
     aes(
@@ -88,14 +78,15 @@ df_skalo |>
   geom_point(
     data = ~filter(., wahl == 2025),
     shape = 21, col = "white",
-    size = 3, position = position_jitter(height = 0, width = 0.3, seed = 1)) +
+    size = 4, position = position_jitter(height = 0, width = 0.3, seed = 1)) +
   geom_text(
     data = ~filter(.,
                    wahl %in% c(2005, 2021) & kandidat == "Merkel" |
                    wahl == 1980 |
                    wahl == 1983 & kandidat == "Kohl" |
                    wahl == 1998 & kandidat == "Schröder" |
-                   kandidat == "Scholz"
+                   wahl == 2021 & kandidat == "Scholz" |
+                   kandidat == "Habeck"
                    ),
     aes(label = kandidat),
     family = "Roboto Condensed", size = 3, hjust = 0, nudge_x = 0.2
@@ -103,12 +94,12 @@ df_skalo |>
   annotate(
     "richtext",
     x = c("1987", "2021", "2025", "2025"), 
-    y = c(0.55, -0.55, 0.5, -0.3), 
+    y = c(0.55, -0.55, 0.5, -0.75), 
     label = c(
       "Kohl war bislang der<br>**unbeliebteste erfolgreiche**<br>Kanzlerkandidat",
       "Laschet",
       "**Alle**<br>Kandidaten<br>im Schnitt<br>**negativ**<br>bewertet",
-      "Habeck<br>& Merz"),
+      "Scholz<br>& Merz"),
     vjust = c(1, 0.5, 0.5, 0.5),
     hjust = c(0, 1, 0.5, 0),
     fill = NA, label.size = 0, family = "Roboto Condensed", size = 3
@@ -130,7 +121,7 @@ df_skalo |>
   guides(fill = "none") +
   labs(
     title = "Erstmals sämtliche Kanzlerkandidaten im Schnitt negativ bewertet",
-    subtitle = "Bewertung der Kandidat:innen in der jeweils letzten Politbarometer-Erhebung vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Januar II)",
+    subtitle = "Bewertung der Kandidat:innen in der jeweils letzten Politbarometer-Erhebung vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Januar III)",
     caption = "Daten: Politbarometer (via GESIS & forschungsgruppe.de).
     Visualisierung: Ansgar Wolsing & Thorsten Faas",
     x = NULL, y = "Bewertung"
