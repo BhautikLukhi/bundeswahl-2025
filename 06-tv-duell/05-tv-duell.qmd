@@ -57,7 +57,10 @@ df_skalo |>
   )
 ```
 
-```{r plot-skalo-2, fig.width = 7.5, fig.height=5}
+```{r plot-skalo-2, fig.width = 7.5, fig.height=6}
+
+annotation_size <- 4.5
+
 df_skalo |> 
   mutate(wahl_fct = factor(wahl)) |> 
   ggplot(aes(wahl_fct, bewertung, fill = partei)) +
@@ -73,7 +76,7 @@ df_skalo |>
     aes(
       shape = ifelse(kandidat == "Merkel" & wahl == "2021", 4, 21),
       col = ifelse(kandidat == "Merkel" & wahl == "2021", "black", "white")),
-    size = 4) +
+    size = annotation_size) +
   geom_text(
     data = ~filter(.,
                    wahl %in% c(2005, 2021) & kandidat == "Merkel" |
@@ -85,25 +88,26 @@ df_skalo |>
                    kandidat == "Merz"
                    ),
     aes(label = kandidat),
-    family = "Roboto Condensed", size = 3, hjust = 0, nudge_x = 0.2
+    family = "Roboto Condensed", size = 4, hjust = 0, nudge_x = 0.2
   ) +
   annotate(
     "richtext",
     x = c("1987", "2021", "2025"), 
-    y = c(0.55, -0.55, 0.5), 
+    y = c(0.38, -0.55, 0.5), 
     label = c(
-      "Kohl war bislang der<br>**unbeliebteste erfolgreiche**<br>Kanzlerkandidat",
+      "Kohl war bislang<br>der **unbeliebteste<br>erfolgreiche**<br>Kanzlerkandidat",
       "Laschet",
       "**Alle**<br>Kandidaten<br>im Schnitt<br>**negativ**<br>bewertet"),
     vjust = c(1, 0.5, 0.5),
     hjust = c(0, 1, 0),
-    fill = NA, label.size = 0, family = "Roboto Condensed", size = 3
+    fill = NA, label.size = 0, family = "Roboto Condensed", size = annotation_size,
+    lineheight = 1
   ) +
   annotate(
     GeomCurve,
     x = c("1987"),
     xend = c("1987"),
-    y = c(0.4),
+    y = c(0.33),
     yend = c(0.6),
     curvature = -0.3, linewidth = 0.2
   ) +
@@ -119,12 +123,13 @@ df_skalo |>
     subtitle = "Bewertung der Kandidat:innen in der jeweils letzten Politbarometer-Erhebung vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar I)",
     caption = "Daten: Politbarometer (via GESIS & forschungsgruppe.de).
     Visualisierung: Ansgar Wolsing & Thorsten Faas",
-    x = NULL, y = "Bewertung"
+    x = NULL, y = NULL # "Bewertung"
   ) +
   theme(
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
     axis.text.x.top = element_text(family = "Roboto Condensed SemiBold"),
-    plot.margin = margin(t = 4, r = 20, b = 4, l = 4)
+    plot.subtitle = element_textbox(margin = margin(b = 20)),
+    plot.margin = margin(t = 4, r = 40, b = 4, l = 4)
   )
 ```
