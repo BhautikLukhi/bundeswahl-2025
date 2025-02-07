@@ -1,5 +1,5 @@
 ---
-title: "03 Wahlomat/Wahlhilfen"
+title: "03 Wahl-O-Mat"
 format:
   html:
     code-fold: true
@@ -91,10 +91,10 @@ prepare_wahlomat_data <- function(x, with_comments = TRUE) {
   df
 }
 
-dfs <- pull_wahlomat_data(2002)
-df <- prepare_wahlomat_data(dfs, with_comments = FALSE)
+dfs <- pull_wahlomat_data(2025)
+df <- prepare_wahlomat_data(dfs)
 
-btw_years <- c(2002, 2005, 2009, 2013, 2017, 2021)
+btw_years <- c(2002, 2005, 2009, 2013, 2017, 2021, 2025)
 
 dfs_all_btw <- map(
   btw_years, function(x) {
@@ -128,14 +128,15 @@ df |>
   arrange(-n)
 ```
 
-### Übereinstimmungen zwischen Parteien
+### Übereinstimmungen zwischen den Antworten der Parteien
 
 ```{r uebereinstimmungen-parteien}
 library(widyr)
 
 # selected_parties <- c("CDU/CSU", "SPD", "AfD", "GRÜNE", "FDP", "DIE LINKE", "FREIE WÄHLER",
 #                       "Tierschutzpartei", "dieBasis", "Die PARTEI")
-selected_parties <- c("CDU/CSU", "SPD", "AfD", "GRÜNE", "FDP", "DIE LINKE", "FREIE WÄHLER")
+# selected_parties <- c("CDU/CSU", "SPD", "AfD", "GRÜNE", "FDP", "DIE LINKE", "FREIE WÄHLER")
+selected_parties <- c("CDU/CSU", "SPD", "GRÜNE", "FDP", "AfD", "Die Linke", "BSW")
 
 df_party_connections <- df |> 
   select(id.statement, party, answer.message) |> 
@@ -167,6 +168,14 @@ df_party_connections |>
   scale_size_area(max_size = 12) +
   scale_fill_gradient2(midpoint = 19) +
   scale_color_identity() +
+  guides(
+    size = guide_legend(order = 1), fill = guide_legend(order = 1)
+  ) +
+  labs(
+    title = "Übereinstimmungen der Partei-Antworten im Wahl-O-Mat",
+    subtitle = "Wie viele der 38 Wahl-O-Mat-Thesen beantworten zwei Parteien in identischer Art und Weise (also beide mit „Stimme zu“, „Stimme nicht zu“ oder „Neutral“)?",
+    caption = "Daten: Wahl-O-Mat (via github.com/gockelhahn/qual-o-mat-data/). Visualisierung: Ansgar Wolsing & Thorsten Faas"
+  ) +
   theme(
     axis.title = element_blank(),
     axis.text = element_text(family = "Roboto Condensed SemiBold"))
@@ -184,26 +193,206 @@ df_number_of_statements_per_year <- dfs_all_btw |>
 
 df_all_btw_party_connections <- dfs_all_btw |>
   bind_rows(.id = "year") |> 
-  select(year, id.statement, party, answer.message) |> 
+  select(year, id.statement, party, answer.message) |>
   mutate(party = case_match(
     party, 
     "CDU / CSU" ~ "CDU/CSU", 
     "BÜNDNIS 90/DIE GRÜNEN" ~ "GRÜNE",
     "Bündnis 90/ Die Grünen" ~ "GRÜNE",
-    "DIE LINKE.PDS" ~ "DIE LINKE",
+    "DIE LINKE.PDS" ~ "Die Linke",
+    "DIE LINKE" ~ "Die Linke",
     "PDS" ~ "DIE LINKE",
-    .default = party)) |> 
+    .default = party)) |>
   filter(party %in% selected_parties) |> 
   mutate(statement_answer = paste(year, id.statement, answer.message, sep = "#")) |> 
   group_by(year) |> 
   pairwise_count(party, statement_answer, diag = FALSE, upper = TRUE) |> 
   mutate(
     item1 = factor(item1, levels = selected_parties),
-    item2 = factor(item2, levels = rev(selected_parties))
+    item2 = factor(item2, levels = selected_parties)
   ) |> 
   inner_join(df_number_of_statements_per_year, by = join_by(year)) |> 
   mutate(share = n / n_statements_per_year) |> 
   select(-n_statements_per_year)
+```
+
+```{r}
+
+df_party_connections_2021_2025 <- df_all_btw_party_connections |> 
+  filter(year %in% c(2021, 2025),
+         item1 %in% selected_parties,
+         item2 %in% selected_parties) |> 
+  mutate(
+    item1_num = as.numeric(item1),
+    item2_num = as.numeric(item2)
+  ) |>
+  # Für 2021 die obere Hälfte, für 2025 die untere Hälfte der Matrix auswählen
+  filter(
+    year == 2025 & as.numeric(item1) < as.numeric(item2)  |
+    year == 2021 & as.numeric(item1) > as.numeric(item2)
+    ) |> 
+  mutate(
+    item2 = fct_rev(item2)
+  ) |> 
+  arrange(year, item1, item2) 
+```
+
+```{r plot-uebereinstimmungen-2021-2025, fig.width=6.25, fig.height=7}
+df_party_connections_2021_2025 |> 
+  ggplot(aes(item1, item2)) +
+  # Jahreszahlen
+  annotate(
+    "text",
+    x = c(3.5, 0.5),
+    y = c(6.5, 1.5),
+    label = c("2021", "2025"),
+    family = "Roboto Condensed", fontface = "bold", size = 30, color = "grey84", hjust = 0
+  ) +
+  geom_point(
+    aes(size = n, fill = n),
+    shape = 21, color = "grey30") +
+  geom_text(
+    data = ~filter(., n > 19),
+    aes(label = n, color = ifelse(n >= 30, "white", "black")),
+    family = "Roboto Condensed"
+  ) +
+  geom_abline(
+    aes(intercept = 8, slope = -1),
+    color = "grey50", linewidth = 0.4, linetype = "dashed") +
+  scale_x_discrete(position = "top") +
+  scale_y_discrete() +
+  scale_size_area(max_size = 12) +
+  scale_fill_gradient2(midpoint = 19) +
+  scale_color_identity() +
+  coord_cartesian(clip = "off") +
+  guides(
+    size = guide_legend(order = 1), fill = guide_legend(order = 1)
+  ) +
+  labs(
+    title = "Übereinstimmungen der Partei-Antworten im Wahl-O-Mat",
+    subtitle = "Wie viele der 38 Wahl-O-Mat-Thesen beantworten zwei Parteien in identischer Art und Weise (also beide mit „Stimme zu“, „Stimme nicht zu“ oder „Neutral“)?",
+    caption = "Daten: Wahl-O-Mat (via github.com/gockelhahn/qual-o-mat-data/). Visualisierung: Ansgar Wolsing & Thorsten Faas",
+    size = "Anzahl Übereinstimmungen", fill = "Anzahl Übereinstimmungen"
+  ) +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_text(family = "Roboto Condensed SemiBold"),
+    plot.subtitle = element_textbox(margin = margin(b = 10)),
+    legend.position = "bottom")
+```
+
+```{r plot-uebereinstimmungen-2021-2025-v2, fig.width=6.25, fig.height=7}
+df_party_connections_2021_2025 |> 
+  ggplot(aes(item1, item2)) +
+  # Jahreszahlen
+  annotate(
+    "text",
+    x = c(6.5, 0.5),
+    y = c(7.5, 0.5),
+    vjust = c(1, 0),
+    label = c("2\n0\n2\n1", "2\n0\n2\n5"),
+    family = "Roboto Condensed", fontface = "bold", size = 8, color = "grey84", 
+    hjust = 0, lineheight = 0.8
+  ) +
+  geom_point(
+    aes(size = n, fill = n),
+    shape = 21, color = "grey30") +
+  geom_text(
+    data = ~filter(., n > 19),
+    aes(label = n, color = ifelse(n >= 30, "white", "black")),
+    family = "Roboto Condensed"
+  ) +
+  geom_abline(
+    aes(intercept = 8, slope = -1),
+    color = "grey50", linewidth = 0.4, linetype = "dashed") +
+  scale_x_discrete(position = "top") +
+  scale_y_discrete() +
+  scale_size_area(max_size = 12) +
+  scale_fill_gradient2(midpoint = 19) +
+  scale_color_identity() +
+  coord_cartesian(clip = "off") +
+  guides(
+    size = guide_legend(order = 1), fill = guide_legend(order = 1)
+  ) +
+  labs(
+    title = "Übereinstimmungen der Partei-Antworten im Wahl-O-Mat",
+    subtitle = "Wie viele der 38 Wahl-O-Mat-Thesen beantworten zwei Parteien in identischer Art und Weise (also beide mit „Stimme zu“, „Stimme nicht zu“ oder „Neutral“)?",
+    caption = "Daten: Wahl-O-Mat (via github.com/gockelhahn/qual-o-mat-data/). Visualisierung: Ansgar Wolsing & Thorsten Faas",
+    size = "Anzahl Übereinstimmungen", fill = "Anzahl Übereinstimmungen"
+  ) +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_text(family = "Roboto Condensed SemiBold"),
+    plot.subtitle = element_textbox(margin = margin(b = 10)),
+    legend.position = "bottom")
+```
+
+```{r plot-uebereinstimmungen-2021-2025-v3, fig.width=6.25, fig.height=7}
+df_party_connections_2021_2025 |> 
+  ggplot(aes(item1, item2)) +
+  # Jahreszahlen
+  annotate(
+    "text",
+    x = c(5.5, 0.5),
+    y = c(2.9, 7.1),
+    vjust = c(1, 0),
+    label = c("\U25B3 2021", "2025 \U25BD"),
+    family = "Roboto Condensed", fontface = "bold", size = 5, color = "grey70", 
+    hjust = 0, lineheight = 0.8, angle = 324
+  ) +
+  geom_point(
+    aes(size = n, fill = n),
+    shape = 21, color = "grey30") +
+  geom_text(
+    data = ~filter(., n > 19),
+    aes(label = n, color = ifelse(n >= 30, "white", "black")),
+    family = "Roboto Condensed"
+  ) +
+  geom_abline(
+    aes(intercept = 8, slope = -1),
+    color = "grey50", linewidth = 0.4, linetype = "dashed") +
+  scale_x_discrete(position = "top") +
+  scale_y_discrete() +
+  scale_size_area(max_size = 12) +
+  scale_fill_gradient2(midpoint = 19) +
+  scale_color_identity() +
+  coord_cartesian(clip = "off") +
+  guides(
+    size = guide_legend(order = 1), fill = guide_legend(order = 1)
+  ) +
+  labs(
+    title = "Übereinstimmungen der Partei-Antworten im Wahl-O-Mat",
+    subtitle = "Wie viele der 38 Wahl-O-Mat-Thesen beantworten zwei Parteien in identischer Art und Weise (also beide mit „Stimme zu“, „Stimme nicht zu“ oder „Neutral“)?",
+    caption = "Daten: Wahl-O-Mat (via github.com/gockelhahn/qual-o-mat-data/). Visualisierung: Ansgar Wolsing & Thorsten Faas",
+    size = "Anzahl Übereinstimmungen", fill = "Anzahl Übereinstimmungen"
+  ) +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_text(family = "Roboto Condensed SemiBold"),
+    plot.subtitle = element_textbox(margin = margin(b = 10)),
+    legend.position = "bottom")
+```
+
+#### Als Slope-Chart
+
+```{r}
+
+df_all_btw_party_connections |> 
+  filter(year %in% c(2021, 2025),
+         item1 %in% selected_parties,
+         item2 %in% selected_parties) |> 
+  filter(as.numeric(item1) < as.numeric(item2)) |>
+  filter(item1 != "BSW", item2 != "BSW") |> 
+  mutate(
+    across(c(item1, item2), function(x) str_remove(x, "Die ")),
+    connection_label = paste(item1, item2, sep = "-"),
+    connection_label_year = ifelse(year == 2021, 
+                              paste(year, connection_label, sep = " | "), 
+                              paste(connection_label, year, sep = " | "))) |> 
+  ggplot(aes(year, n, group = connection_label)) +
+  geom_line() +
+  geom_text(
+    aes(label = connection_label, hjust = ifelse(year == 2021, 1, 0)))
 ```
 
 ```{r all-btw-combined-2}
@@ -242,12 +431,7 @@ selected_connections <- c(
   "SPD & GRÜNE",
   "CDU/CSU & SPD",
   "SPD & FDP",
-  "GRÜNE & FDP",
-  "SPD & DIE LINKE",
-  "AfD & CDU/CSU",
-  "AfD & FDP",
-  "AfD & SPD",
-  "AfD & GRÜNE"
+  "GRÜNE & FDP"
 )
 
 df_all_btw_party_connections |> 
@@ -260,3 +444,5 @@ df_all_btw_party_connections |>
   coord_cartesian(ylim = c(0, 1)) +
   facet_wrap(vars(connection))
 ```
+
+### 
