@@ -250,7 +250,3 @@ p + facet_wrap(vars(Party_Shortcut), scales = "free_y") +
                        color_pal[2], color_pal[4]),
   )
 ```
-
-```{r}
-head(df_dawum)
-```
