@@ -1,0 +1,245 @@
+---
+title: "07 Demoskopie"
+format:
+  html:
+    code-fold: true
+    message: false
+    warning: false
+---
+
+```{r setup}
+library(tidyverse)
+library(ggtext)
+library(here)
+library(rvest)
+library(dawumr)
+
+knitr::opts_chunk$set(dev = "ragg_png")
+
+source(here("R", "custom-theme.R"))
+theme_set(theme_custom())
+```
+
+## Daten
+
+#### Scrapen Wahlrecht.de
+
+Auf <https://www.wahlrecht.de/umfragen/politbarometer.htm> sind die Umfrageergebnisse der Forschungsgruppe Wahlen seit 1998 verfügbar - sowohl Projektion als auch die politische Stimmung.
+
+##### Links sammeln
+
+```{r scrape-links, cache=TRUE}
+
+# Links zu den Jahres-Unterseiten sammeln
+base_url <- "https://www.wahlrecht.de/umfragen"
+start_page_projektion_url <- "https://www.wahlrecht.de/umfragen/politbarometer.htm"
+start_page_projektion <- read_html(start_page_projektion_url)
+links_projektion <- start_page_projektion |> 
+  html_nodes(css = "a") |> 
+  html_attr("href")
+links_projektion <- links_projektion[str_detect(links_projektion, "politbarometer-")]
+
+start_page_stimmung_url <- "https://www.wahlrecht.de/umfragen/politbarometer/stimmung.htm"
+start_page_stimmung <- read_html(start_page_stimmung_url)
+links_stimmung <- start_page_stimmung |> 
+  html_nodes(css = "a") |> 
+  html_attr("href")
+links_stimmung <- paste("politbarometer", 
+                        links_stimmung[str_detect(links_stimmung, "stimmung-")],
+                        sep = "/")
+```
+
+##### Seiten abrufen und Tabelle extrahieren
+
+```{r scrape-tables, cache=TRUE}
+links_kombi <- c(start_page_projektion_url, start_page_stimmung_url, 
+                 paste(base_url, c(links_projektion, links_stimmung), sep = "/"))
+tables <- map(links_kombi, function(x) {
+  read_html(x) |> 
+    html_nodes("table.wilko") |> 
+    html_table()
+})
+tables <- set_names(tables, str_remove(links_kombi, base_url))
+```
+
+##### Extrahierte HTML-Tabellen aufbereiten
+
+Zunächst nur die aktuellsten Umfragen (ab 2017)
+
+```{r}
+tables_aktuell <- c(pluck(tables, "/politbarometer/stimmung.htm"),
+                    pluck(tables, "/politbarometer.htm"))
+names(tables_aktuell) <- c("stimmung", "projektion")
+
+df_stimmung <- tables_aktuell[["stimmung"]][, -c(2, 12)] |> 
+  tail(nrow(tables_aktuell[["stimmung"]]) - 3) |> 
+  rename(datum = 1) |> 
+  pivot_longer(cols = -c(datum), names_to = "partei", values_to = "anteil") |> 
+  filter(!str_detect(datum, "^Wahl")) |> 
+  mutate(
+    anteil = str_remove_all(anteil, "[-%]"),
+    anteil = as.numeric(anteil),
+    datum = dmy(datum)
+  ) |> 
+  # Unentschlossene und Nichtwähler + Summe entfernen
+  filter(!partei %in% c("Unent-schlossene", "Nicht-wähler", "Summe"))
+
+projektion_colnames <- as.character(tables_aktuell[["projektion"]][1, ])
+projektion_colnames[c(1, 2, 12)] <- c("datum", "X1", "X2")
+colnames(tables_aktuell[["projektion"]]) <- projektion_colnames
+
+df_projektion <- tables_aktuell[["projektion"]] |> 
+  select(-c(X1, X2)) |> 
+  tail(nrow(tables_aktuell[["stimmung"]]) - 3) |> 
+  filter(Zeitraum != "Bundestagswahl") |> 
+  pivot_longer(cols = -c(datum, Befragte, Zeitraum), 
+               names_to = "partei", values_to = "anteil") |> 
+   mutate(
+    anteil = str_remove_all(anteil, "[-%]"),
+    anteil = as.numeric(anteil),
+    datum = dmy(datum)
+  ) 
+
+df_poba_kombi <- df_projektion |> 
+  left_join(df_stimmung, by = join_by(datum, partei),
+            suffix = c(".projektion", ".stimmung"))
+  
+```
+
+#### Ergebnisse Bundestagswahlen
+
+```{r}
+df_btw <- tribble(
+  ~wahl, ~partei, ~anteil,
+  2021, "SPD", 25.7,
+  2021, "CDU/CSU", 24.2,
+  2021, "Grüne", 14.7,
+  2021, "FDP", 11.4,
+  2021, "AfD", 10.4,
+  2021, "Linke", 4.9
+)
+```
+
+```{r}
+df_poba_kombi |> 
+  filter(!partei %in% c("BSW", "FW", "Sonstige")) |> 
+  mutate(
+    partei = case_match(
+      partei,
+      "GRÜNE" ~ "Grüne",
+      "LINKE" ~ "Linke",
+      .default = partei
+    ),
+    partei = factor(partei, levels = c("CDU/CSU", "SPD", "AfD", "Grüne", "FDP", "Linke"))
+  ) |> 
+  ggplot(aes(datum)) +
+  geom_line(
+    aes(y = anteil.stimmung),
+    col = color_pal[1], linewidth = 0.2) +
+  geom_line(
+    aes(y = anteil.projektion),
+    col = color_pal[2], linewidth = 0.8
+    ) +
+  # Bundestagswahlergebnisse
+  geom_point(
+    data = df_btw,
+    aes(as_date("2021-09-26"), anteil),
+    inherit.aes = FALSE, size = 3, shape = 21, color = "white", fill = color_pal[3]
+  ) +
+  scale_color_manual(values = party_pal) +
+  facet_wrap(vars(partei)) +
+  guides(color = "none") +
+  labs(
+    title = "Politische Stimmung vs. Projektion",
+    caption = "Daten: Politbarometer",
+    x = NULL, y = "Anteil (%)"
+  ) +
+  theme(
+    strip.text = element_text(family = "Roboto Condensed SemiBold", size = 11)
+  )
+```
+
+### Trends BTW 2021 vs. 2025
+
+#### Umfragedaten DAWUM
+
+```{r load-dawum, cache=TRUE}
+df_dawum <- pull_dawum_dataframe()
+```
+
+```{r}
+table(df_dawum$Institute_Name)
+```
+
+```{r}
+
+
+selected_institutes <- c("Allensbach", "Forsa", "Forschungsgruppe Wahlen", "Infratest dimap",
+                         "Verian (Emnid)", "YouGov", "Ipsos", "INSA")
+
+date_election_2021 <- as_date("2021-09-27")
+date_election_2025 <- as_date("2025-02-23")
+campaign_duration <- duration("3 months")
+
+p <- df_dawum |> 
+  filter(Parliament_Shortcut == "Bundestag" & Institute_Name %in% selected_institutes) |> 
+  filter(Party_Shortcut %in% c("CDU/CSU", "SPD", "Grüne", "FDP", "AfD", "Linke")) |> 
+  mutate(
+    date_field = Survey_Period_Start + 
+      difftime(Survey_Period_End, Survey_Period_End, unit = "days") / 2) |> 
+  filter(
+    date_field >= date_election_2021 - campaign_duration & date_field < date_election_2021 |
+    date_field >= date_election_2025 - campaign_duration & date_field < date_election_2025
+  ) |> 
+  # Zeitpunkt der Umfrage als Mittelpunkt der Feldzeit
+  mutate(
+    election_year = year(date_field),
+    election_year = ifelse(election_year %in% 2024:2025, 2025, election_year),
+    election_year = factor(election_year),
+    days_until_election = case_when(
+      election_year == 2021 ~ date_election_2021 - date_field,
+      election_year == 2025 ~ date_election_2025 - date_field
+    ),
+    days_until_election = as.integer(days_until_election)
+  ) |> 
+  # Pro Institute nur eine Umfrage pro Woche TODO
+  group_by(Institute_Name, election_year, days_until_election, Party_Shortcut) |> 
+  summarize(share = mean(Share), .groups = "drop") |> 
+  mutate(Party_Shortcut = fct_reorder(Party_Shortcut, -share)) |> 
+  ggplot(aes(days_until_election, share, color = election_year)) +
+  geom_point(size = 0.2) +
+  geom_smooth(
+    aes(),
+    method = "loess", span = 0.5
+  ) +
+  scale_x_reverse() +
+  scale_color_manual(values = color_pal[2:3]) +
+  coord_cartesian(ylim = c(NA, NA)) +
+  labs(
+    title = "Bislang deutlich weniger Bewegung in den Umfragen als 2021",
+    subtitle = sprintf("Geglättete Stimmenanteile (%%) im Vorfeld der Bundestagswahlen
+                       <b style='color:%s'>2021</b> und <b style='color:%s'>2025</b>", 
+                       color_pal[2], color_pal[3]),
+    caption = paste("Daten: DAWUM, Ergebnisse der Institute", 
+                    paste(selected_institutes, collapse = ", "),
+                    "Visualisierung: Ansgar Wolsing & Thorsten Faas"),
+    x = "Anzahl Tage bis zur Wahl", y = NULL
+  ) +
+  theme(
+    legend.position = "none", legend.justification = "left"
+  )
+```
+
+```{r}
+p + facet_wrap(vars(Party_Shortcut)) +
+  coord_cartesian(ylim = c(0, NA)) 
+```
+
+```{r}
+p + facet_wrap(vars(Party_Shortcut), scales = "free_y") +
+  scale_y_continuous(breaks = seq(0, 100, 5))
+```
+
+```{r}
+head(df_dawum)
+```
