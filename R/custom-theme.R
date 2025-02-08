@@ -14,7 +14,8 @@ theme_custom <- function(base_size = 13, ...) {
       plot.caption = element_textbox(
         family = "Roboto Slab", hjust = 0, lineheight = 1.1, width = 1,
         margin = margin(t = 4, b = 8)),
-      axis.text.x = element_text(family = "Roboto Condensed SemiBold")
+      axis.text.x = element_text(family = "Roboto Condensed SemiBold"),
+      strip.text = element_text(family = "Roboto Condensed SemiBold", size = 11)
     )  
 }
 
