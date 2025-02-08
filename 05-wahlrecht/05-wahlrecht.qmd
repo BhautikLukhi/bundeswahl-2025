@@ -613,13 +613,68 @@ dfs_wk_abstand |>
   scale_x_continuous(
     breaks = seq(1950, 2020, 10),
     expand = expansion(mult = c(0, 0.02))) +
-  scale_y_continuous(labels = scales::label_percent()) +
+  scale_y_continuous(
+    breaks = seq(0, 1, 0.25),
+    labels = scales::label_percent()) +
   scale_color_manual(values = color_pal[2:4]) +
   coord_cartesian(ylim = c(0, NA)) +
   labs(
     title = "Erststimmen-Anteil der Wahlkreisgewinner ist von 55 %<br>
     in den 1980ern auf 33 % in 2021 gesunken",
     subtitle = "Anteil der Erststimmen (%)",
+    caption = "Daten: Bundeswahlleiterin.
+    Visualisierung: Ansgar Wolsing & Thorsten Faas",
+    x = NULL, y = NULL,
+    col = "Wahlausgang"
+  ) +
+  theme(
+    axis.text.x = element_text(family = "Roboto Condensed SemiBold")
+  )
+```
+
+```{r plot-anteile-wk-gewinner-absolut}
+dfs_wk_abstand |> 
+  bind_rows(.id = "wahl") |> 
+  mutate(wahl = as.numeric(wahl)) |> 
+  group_by(wahl) |> 
+  summarize(
+    mean_anteil_gewinner_absolut = mean(anteil_gewinner > 0.5)
+    ) |>
+  ggplot(aes(wahl, mean_anteil_gewinner_absolut, group = 1)) +
+  geom_area(
+    color = color_pal[1], linewidth = 1.2, fill = alpha(color_pal[1], 0.1)) +
+  annotate(
+    "text",
+    x = c(1968, 2010),
+    y = c(0.53, 0.5),
+    label = c("1972: mehr als 80 % der\nWahlkreise mit absoluter\nErststimmenmehrheit\ngewonnen",
+              "2021: ein einziger\nWahlkreis (Emden -\nAurich, SPD)"),
+    family = "Roboto Condensed", hjust = 0, size = 4, lineheight = 0.9,
+    vjust = 1
+  ) +
+  geom_point(
+    data = ~filter(., wahl %in% c(1972, 2021)),
+    aes(),
+    col = color_pal[1], size = 3
+  ) +
+  annotate(
+    GeomCurve,
+    x = c(1972, 2021),
+    xend = c(1972, 2021),
+    y = c(0.55, 0.35),
+    yend = c(0.76, 0.03),
+    curvature = -0.1, linewidth = 0.2,
+    arrow = arrow(angle = 20, length = unit(0.25, "cm"))
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2020, 10),
+    expand = expansion(mult = c(0, 0.02))) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  scale_color_manual(values = color_pal[2:4]) +
+  coord_cartesian(ylim = c(0, NA), clip = "off") +
+  labs(
+    title = "Immer weniger mit absoluter Mehrheit gewonnene Direktmandate",
+    subtitle = "Anteil der mit mehr als 50 % der Erststimmen gewonnenen Wahlkreise (in %)",
     caption = "Daten: Bundeswahlleiterin.
     Visualisierung: Ansgar Wolsing & Thorsten Faas",
     x = NULL, y = NULL,
