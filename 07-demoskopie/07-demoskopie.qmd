@@ -217,13 +217,13 @@ p <- df_dawum |>
     method = "loess", span = 0.5
   ) +
   scale_x_reverse() +
-  scale_color_manual(values = color_pal[2:3]) +
+  scale_color_manual(values = color_pal[c(2, 4)]) +
   coord_cartesian(ylim = c(NA, NA)) +
   labs(
     title = "Bislang deutlich weniger Bewegung in den Umfragen als 2021",
     subtitle = sprintf("Geglättete Stimmenanteile (%%) in Umfragen im Vorfeld der Bundestagswahlen
                        <b style='color:%s'>2021</b> und <b style='color:%s'>2025</b>", 
-                       color_pal[2], color_pal[3]),
+                       color_pal[2], color_pal[4]),
     caption = paste("Daten: DAWUM, Ergebnisse der Institute", 
                     paste(selected_institutes, collapse = ", "),
                     "Visualisierung: Ansgar Wolsing & Thorsten Faas"),
@@ -242,7 +242,13 @@ p + facet_wrap(vars(Party_Shortcut)) +
 ```{r}
 p + facet_wrap(vars(Party_Shortcut), scales = "free_y") +
   # scale_y_continuous(breaks = seq(0, 100, 5)) +
-  coord_cartesian(ylim = c(0, NA))
+  coord_cartesian(ylim = c(0, NA)) +
+  labs(
+    subtitle = sprintf("Geglättete Stimmenanteile (%%) in Umfragen im Vorfeld der Bundestagswahlen
+                       <b style='color:%s'>2021</b> und <b style='color:%s'>2025</b>, 
+                       y-Achse je Partei skaliert", 
+                       color_pal[2], color_pal[4]),
+  )
 ```
 
 ```{r}
