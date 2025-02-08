@@ -196,6 +196,7 @@ p <- df_dawum |>
     election_year = year(date_field),
     election_year = ifelse(election_year %in% 2024:2025, 2025, election_year),
     election_year = factor(election_year),
+    week = isoweek(date_field),
     days_until_election = case_when(
       election_year == 2021 ~ date_election_2021 - date_field,
       election_year == 2025 ~ date_election_2025 - date_field
@@ -203,8 +204,11 @@ p <- df_dawum |>
     days_until_election = as.integer(days_until_election)
   ) |> 
   # Pro Institute nur eine Umfrage pro Woche TODO
-  group_by(Institute_Name, election_year, days_until_election, Party_Shortcut) |> 
-  summarize(share = mean(Share), .groups = "drop") |> 
+  group_by(Institute_Name, election_year, week, Party_Shortcut) |> 
+  summarize(
+    share = mean(Share), 
+    days_until_election = round(mean(days_until_election)),
+    .groups = "drop") |> 
   mutate(Party_Shortcut = fct_reorder(Party_Shortcut, -share)) |> 
   ggplot(aes(days_until_election, share, color = election_year)) +
   geom_point(size = 0.2) +
@@ -217,7 +221,7 @@ p <- df_dawum |>
   coord_cartesian(ylim = c(NA, NA)) +
   labs(
     title = "Bislang deutlich weniger Bewegung in den Umfragen als 2021",
-    subtitle = sprintf("Geglättete Stimmenanteile (%%) im Vorfeld der Bundestagswahlen
+    subtitle = sprintf("Geglättete Stimmenanteile (%%) in Umfragen im Vorfeld der Bundestagswahlen
                        <b style='color:%s'>2021</b> und <b style='color:%s'>2025</b>", 
                        color_pal[2], color_pal[3]),
     caption = paste("Daten: DAWUM, Ergebnisse der Institute", 
@@ -237,7 +241,8 @@ p + facet_wrap(vars(Party_Shortcut)) +
 
 ```{r}
 p + facet_wrap(vars(Party_Shortcut), scales = "free_y") +
-  scale_y_continuous(breaks = seq(0, 100, 5))
+  # scale_y_continuous(breaks = seq(0, 100, 5)) +
+  coord_cartesian(ylim = c(0, NA))
 ```
 
 ```{r}
