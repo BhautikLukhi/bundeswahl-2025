@@ -88,7 +88,7 @@ df_skalo |>
                    kandidat == "Merz"
                    ),
     aes(label = kandidat),
-    family = "Roboto Condensed", size = 4, hjust = 0, nudge_x = 0.2
+    family = "Roboto Condensed", size = annotation_size, hjust = 0, nudge_x = 0.2
   ) +
   annotate(
     "richtext",
@@ -131,6 +131,98 @@ df_skalo |>
     axis.text.x.top = element_text(family = "Roboto Condensed SemiBold"),
     plot.subtitle = element_textbox(margin = margin(b = 20)),
     plot.margin = margin(t = 4, r = 40, b = 4, l = 4)
+  )
+```
+
+##### Variante mit vollständigen Kandidatennennung in Fußnote
+
+```{r plot-skalo-3, fig.width = 7.5, fig.height=7}
+
+annotation_size <- 4.5
+
+kandidaten_hinweis <- df_skalo |> 
+  filter(!kandidat %in% c("Merkel", "Schröder", "Schmidt", "Kohl", "Merz", "Scholz", 
+                          "Baerbock", "Habeck", "Laschet", "Strauß")) |> 
+  transmute(wahl_kandidat_label = paste(wahl, kandidat, sep = " "))
+
+df_skalo |> 
+  filter(!(wahl == 2021 & kandidat == "Merkel")) |> 
+  mutate(wahl_fct = factor(wahl)) |> 
+  ggplot(aes(wahl_fct, bewertung, fill = partei)) +
+  geom_vline(
+    aes(xintercept = wahl_fct), 
+    linewidth = 9, color = alpha("grey80", 0.3)) +
+  geom_hline(aes(yintercept = 0), linewidth = 0.5) +
+  geom_line(
+    aes(group = kandidat),
+    linetype = "dashed", linewidth = 0.3, col = "grey50"
+  ) +
+  geom_point(
+    aes(
+      shape = ifelse(kandidat == "Merkel" & wahl == "2021", 4, 21),
+      col = ifelse(kandidat == "Merkel" & wahl == "2021", "black", "white")),
+    size = annotation_size) +
+  geom_text(
+    data = ~filter(.,
+                   wahl %in% c(2005, 2021) & kandidat == "Merkel" |
+                   wahl == 1980 |
+                   wahl == 1983 & kandidat == "Kohl" |
+                   wahl == 1998 & kandidat == "Schröder" |
+                   kandidat == "Scholz" |
+                   kandidat == "Habeck" |
+                   kandidat == "Merz"
+                   ),
+    aes(label = kandidat),
+    family = "Roboto Condensed", size = annotation_size, hjust = 0, nudge_x = 0.2
+  ) +
+  annotate(
+    "richtext",
+    x = c("1987", "2021", "2025", "2021"), 
+    y = c(0.34, -0.55, 0.5, 0.2), 
+    label = c(
+      "Kohl war bislang<br>der **unbeliebteste<br>erfolgreiche**<br>Kanzlerkandidat",
+      "Laschet",
+      # "**2025 alle**<br>Kandidaten<br>im Schnitt<br>negativ<br>bewertet",
+      "",
+      "Baerbock"),
+    vjust = c(1, 0.5, 0.5, 0.5),
+    hjust = c(0, 1, 0, 1),
+    fill = NA, label.size = 0, family = "Roboto Condensed", size = annotation_size,
+    lineheight = 1
+  ) +
+  annotate(
+    GeomCurve,
+    x = c("1987"),
+    xend = c("1987"),
+    y = c(0.31),
+    yend = c(0.6),
+    curvature = -0.3, linewidth = 0.2
+  ) +
+  scale_x_discrete(position = "top") +
+  scale_y_continuous(labels = scales::label_number(style_positive = "plus")) +
+  scale_fill_manual(values = party_pal) +
+  scale_shape_identity() +
+  scale_color_identity() +
+  coord_cartesian(ylim = c(-1, 3), clip = "off") +
+  guides(fill = "none") +
+  labs(
+    title = "2025 erstmals sämtliche Kanzlerkandidaten negativ bewertet",
+    subtitle = "Bewertung der Kandidat:innen in der jeweils letzten Politbarometer-Erhebung vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar I)",
+    caption = paste(
+      paste(
+        "Nicht genannte Kandidaten: ",
+       paste(kandidaten_hinweis$wahl_kandidat_label, collapse = ", ")),
+      "Daten: Politbarometer (via GESIS & forschungsgruppe.de).
+        Visualisierung: Ansgar Wolsing & Thorsten Faas", sep = "<br><br>"
+    ),
+    x = NULL, y = NULL # "Bewertung"
+  ) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x.top = element_text(family = "Roboto Condensed SemiBold"),
+    plot.subtitle = element_textbox(margin = margin(b = 20)),
+    plot.margin = margin(t = 4, r = 24, b = 4, l = 4)
   )
 ```
 
@@ -181,7 +273,8 @@ df_zuschauer |>
   facet_grid(cols = vars(btw_kandidaten_label), switch = "x", space = "free_x", scale = "free_x") +
   labs(
     title = "Zuschauerinteresse an den TV-Duellen im Bundestagswahlkampf",
-    subtitle = "Zuschauer in Mio."
+    subtitle = "Zuschauer in Mio.",
+    caption = "Daten: Wikipedia, eigene Recherche. Visualisierung: Ansgar Wolsing & Thorsten Faas",
   ) +
   theme(
     axis.text = element_blank(),
