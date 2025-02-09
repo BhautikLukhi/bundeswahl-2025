@@ -133,3 +133,65 @@ df_skalo |>
     plot.margin = margin(t = 4, r = 40, b = 4, l = 4)
   )
 ```
+
+## Zuschauerzahlen TV-Duelle
+
+```{r load-data-tvduelle-zuschauer}
+
+df_zuschauer <- read_tsv(here("data", "TV-Duelle", "tv-duelle-quoten.tsv"))
+```
+
+```{r plot-zuschauer-tv-duelle}
+btw_kandidaten <- tribble(
+  ~btw, ~kandidaten,
+  2002, "Schröder/Stoiber",
+  2005, "Schröder/Merkel",
+  2009, "Merkel/Steinmeier",
+  2013, "Merkel/Steinbrück",
+  2017, "Merkel/Schulz",
+  2021, "Laschet/Scholz/Baerbock"
+)
+
+df_zuschauer |> 
+  inner_join(btw_kandidaten, by = join_by(btw)) |> 
+  # mutate(
+  #   btw_kandidaten_label = paste(btw, kandidaten, sep = "\n"),
+  #   btw_kandidaten_label = ifelse(
+  #     btw %in% 2005:2017,
+  #     str_wrap(btw_kandidaten_label, 10, whitespace_only = FALSE),
+  #     btw_kandidaten_label)) |> 
+    mutate(
+      kandidate_label = ifelse(
+         btw %in% 2005:2017,
+         str_replace(kandidaten, "/", "/<br>"),
+         kandidaten
+      ),
+    btw_kandidaten_label = sprintf("<b style='font-size:12pt'>%s</b><br>%s", btw, kandidate_label)
+    ) |> 
+  ggplot(aes(sendungsnummer, zuschauer)) +
+  geom_col(
+    fill = color_pal[1]
+  ) +
+  geom_text(
+    aes(label = scales::number(zuschauer, accuracy = 0.1, decimal.mark = ",")),
+    vjust = 1, nudge_y = -0.5,
+    family = "Roboto Condensed SemiBold", col = "white"
+  ) +
+  geom_hline(aes(yintercept = 0)) +
+  facet_grid(cols = vars(btw_kandidaten_label), switch = "x", space = "free_x", scale = "free_x") +
+  labs(
+    title = "Zuschauerinteresse an den TV-Duellen im Bundestagswahlkampf",
+    subtitle = "Zuschauer in Mio."
+  ) +
+  theme(
+    axis.text = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    panel.spacing.x = unit(5, "mm"),
+    strip.text.x.bottom = element_markdown(
+      family = "Roboto Condensed",
+      vjust = 1,
+      margin = margin(t = 0))
+  )
+```
