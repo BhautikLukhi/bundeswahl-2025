@@ -446,3 +446,66 @@ df_all_btw_party_connections |>
 ```
 
 ### 
+
+### Thesen und Parteien
+
+Bei welchen Thesen gibt es die meisten Übereinstimmungen?
+
+```{r}
+
+selected_parties <- c(selected_parties, "Volt")
+
+df_thesen_uebereinstimmungen <- df |> 
+  mutate(
+    party = case_match(
+      party, 
+      "CDU / CSU" ~ "CDU/CSU", 
+      .default = party)
+    ) |> 
+  filter(party %in% selected_parties) |> 
+  count(id.statement, label, answer.message, name = "n_uebereinstimmende_parteien") |> 
+  slice_max(order_by = n_uebereinstimmende_parteien, 
+            n = 1, with_ties = FALSE, by = id.statement) |> 
+  arrange(-n_uebereinstimmende_parteien)
+df_thesen_uebereinstimmungen
+```
+
+```{r plot-thesen-parteien, fig.width=6, fig.height=7.2}
+df |> 
+  select(id.statement, label, party, answer.message) |> 
+  inner_join(select(df_thesen_uebereinstimmungen, - answer.message), by = join_by(id.statement, label)) |> 
+  mutate(
+    party = case_match(
+      party, 
+      "CDU / CSU" ~ "CDU/CSU", 
+      .default = party),
+    party = factor(party, levels = selected_parties),
+    label = fct_reorder(label, n_uebereinstimmende_parteien)) |> 
+  filter(party %in% selected_parties) |> 
+  ggplot(aes(party, label)) +
+  geom_tile(
+    aes(fill = answer.message),
+    color = "white", linewidth = 0.75
+  ) +
+  scale_x_discrete(position = "top", expand = c(0, 0)) +
+  scale_y_discrete(position = "right") +
+  scale_fill_manual(values = c(color_pal[7], "grey70", "pink")) +
+  labs(
+    title = "Antworten der Parteien zu den Thesen des Wahl-O-Mat",
+    caption = "Daten: Wahl-O-Mat (via github.com/gockelhahn/qual-o-mat-data/).
+    Visualisierung: Ansgar Wolsing & Thorsten Faas",
+    fill = NULL
+  ) +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0, 1.085),
+    legend.justification = "left",
+    legend.direction = "horizontal",
+    axis.title.x.top = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.y = element_text(hjust = 0),
+    panel.grid = element_blank(),
+    plot.title = element_markdown(margin = margin(b = 36)),
+    plot.caption = element_textbox(width = 1.5, margin = margin(t = 6, b = 12))
+  )
+```
