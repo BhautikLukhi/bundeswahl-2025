@@ -453,8 +453,6 @@ Bei welchen Thesen gibt es die meisten Übereinstimmungen?
 
 ```{r}
 
-selected_parties <- c(selected_parties, "Volt")
-
 df_thesen_uebereinstimmungen <- df |> 
   mutate(
     party = case_match(
@@ -479,20 +477,35 @@ df |>
       party, 
       "CDU / CSU" ~ "CDU/CSU", 
       .default = party),
-    party = factor(party, levels = selected_parties),
+    # party = factor(party, levels = selected_parties)),
+    label = case_match(
+      label,
+      "Grundgesetz" ~ "\"Verantwortung vor Gott\" im Grundgesetz",
+      "Krankenkassen" ~ "Gesetzliche Krankenkasse für alle",
+      "Ehrenamt" ~ "Ehrenamt auf Rente anrechnen",
+      "Schwangerschaftsabbruch nach Beratung" ~ "Schwangerschaftsabbruch nur nach Beratung",
+      .default = label
+    ),
     label = fct_reorder(label, n_uebereinstimmende_parteien)) |> 
-  filter(party %in% selected_parties) |> 
+  filter(party %in% selected_parties) |>
+  mutate(
+    party = ifelse(party == "Die Linke", "Linke", party),
+    party = factor(party, levels = c("CDU/CSU", "FDP", "AfD", "BSW", "SPD", "GRÜNE", 
+                                     "Linke"))
+    ) |> 
   ggplot(aes(party, label)) +
   geom_tile(
     aes(fill = answer.message),
-    color = "white", linewidth = 0.75
+    color = "black", linewidth = 0.2, width = 0.91, height = 0.80
   ) +
   scale_x_discrete(position = "top", expand = c(0, 0)) +
   scale_y_discrete(position = "right") +
-  scale_fill_manual(values = c(color_pal[7], "grey70", "pink")) +
+  # scale_fill_manual(values = c(color_pal[7], "grey70", "#db30ca")) +
+  scale_fill_brewer(palette = "PiYG", direction = -1) +
+  guides(fill = guide_legend(override.aes = list(color = "black", linewidth = 0.2))) +
   labs(
     title = "Antworten der Parteien zu den Thesen des Wahl-O-Mat",
-    caption = "Daten: Wahl-O-Mat (via github.com/gockelhahn/qual-o-mat-data/).
+    caption = "Daten: Wahl-O-Mat (via github.com/gockelhahn/qual-o-mat-data/).<br>
     Visualisierung: Ansgar Wolsing & Thorsten Faas",
     fill = NULL
   ) +
@@ -503,7 +516,8 @@ df |>
     legend.direction = "horizontal",
     axis.title.x.top = element_blank(),
     axis.title.y = element_blank(),
-    axis.text.y = element_text(hjust = 0),
+    axis.text.y = element_text(family = "Roboto Condensed Medium", 
+                               hjust = 0, size = 8.5),
     panel.grid = element_blank(),
     plot.title = element_markdown(margin = margin(b = 36)),
     plot.caption = element_textbox(width = 1.5, margin = margin(t = 6, b = 12))
