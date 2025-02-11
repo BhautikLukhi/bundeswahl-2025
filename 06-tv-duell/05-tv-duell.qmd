@@ -138,7 +138,7 @@ df_skalo |>
 
 ```{r plot-skalo-3, fig.width = 7.5, fig.height=7}
 
-annotation_size <- 4.5
+annotation_size <- 4.25
 
 kandidaten_hinweis <- df_skalo |> 
   filter(!kandidat %in% c("Merkel", "Schröder", "Schmidt", "Kohl", "Merz", "Scholz", 
@@ -173,22 +173,24 @@ df_skalo |>
                    kandidat == "Merz"
                    ),
     aes(label = kandidat),
-    family = "Roboto Condensed", size = annotation_size, hjust = 0, nudge_x = 0.2
+    family = "Roboto Condensed Medium", size = annotation_size,
+    hjust = 0, nudge_x = 0.2
   ) +
   annotate(
     "richtext",
     x = c("1987", "2021", "2025", "2021"), 
-    y = c(0.34, -0.55, 0.5, 0.2), 
+    y = c(0.33, -0.55, 0.5, 0.2), 
     label = c(
-      "Kohl war bislang<br>der **unbeliebteste<br>erfolgreiche**<br>Kanzlerkandidat",
+      "<span style='font-family: Roboto Condensed'>Kohl war 
+      bislang<br>der **unbeliebteste<br>erfolgreiche**<br>Kanzlerkandidat</span>",
       "Laschet",
       # "**2025 alle**<br>Kandidaten<br>im Schnitt<br>negativ<br>bewertet",
       "",
       "Baerbock"),
     vjust = c(1, 0.5, 0.5, 0.5),
     hjust = c(0, 1, 0, 1),
-    fill = NA, label.size = 0, family = "Roboto Condensed", size = annotation_size,
-    lineheight = 1
+    fill = NA, label.size = 0, family = "Roboto Condensed Medium", 
+    size = annotation_size, lineheight = 1
   ) +
   annotate(
     GeomCurve,
@@ -220,9 +222,10 @@ df_skalo |>
   theme(
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
-    axis.text.x.top = element_text(family = "Roboto Condensed SemiBold"),
+    axis.text.y = element_text(family = "Roboto Condensed SemiBold", size = 12),
+    axis.text.x.top = element_text(family = "Roboto Condensed SemiBold", size = 14),
     plot.subtitle = element_textbox(margin = margin(b = 20)),
-    plot.margin = margin(t = 4, r = 24, b = 4, l = 4)
+    plot.margin = margin(t = 6, r = 24, b = 6, l = 6)
   )
 ```
 
@@ -244,14 +247,9 @@ btw_kandidaten <- tribble(
   2021, "Laschet/Scholz/Baerbock"
 )
 
-df_zuschauer |> 
+df_zuschauer |>
+  filter(btw <= 2021) |> 
   inner_join(btw_kandidaten, by = join_by(btw)) |> 
-  # mutate(
-  #   btw_kandidaten_label = paste(btw, kandidaten, sep = "\n"),
-  #   btw_kandidaten_label = ifelse(
-  #     btw %in% 2005:2017,
-  #     str_wrap(btw_kandidaten_label, 10, whitespace_only = FALSE),
-  #     btw_kandidaten_label)) |> 
     mutate(
       kandidate_label = ifelse(
          btw %in% 2005:2017,
@@ -274,7 +272,7 @@ df_zuschauer |>
   labs(
     title = "Zuschauerinteresse an den TV-Duellen im Bundestagswahlkampf",
     subtitle = "Zuschauer in Mio.",
-    caption = "Daten: Wikipedia, eigene Recherche. Visualisierung: Ansgar Wolsing & Thorsten Faas",
+    caption = "Daten: Wikipedia, eigene Recherche. Visualisierung: Ansgar Wolsing & Thorsten Faas"
   ) +
   theme(
     axis.text = element_blank(),
@@ -287,4 +285,50 @@ df_zuschauer |>
       vjust = 1,
       margin = margin(t = 0))
   )
+```
+
+#### Zuschauerzahlen ÖRR vs. Privat
+
+```{r plot-zuschauer-tv-duelle-oerr-vs-privat}
+df_zuschauer |> 
+  filter(btw %in% c(2002, 2021, 2025)) |> 
+  mutate(
+    sender = str_wrap(sender, 12),
+    oerr_privat = case_when(
+      str_detect(sender, "ARD|ZDF") ~ "Öffentlich-rechtlich",
+      str_detect(sender, "RTL|ntv|Sat\\.1|ProSieben") ~ "Privat"
+    )) |> 
+  ggplot(aes(sender, zuschauer)) +
+  geom_col(
+    aes(fill = oerr_privat),
+    width = 0.75) +
+  geom_text(
+    aes(label = scales::number(zuschauer, accuracy = 0.1, decimal.mark = ",")),
+    vjust = 1, nudge_y = -0.5,
+    family = "Roboto Condensed SemiBold", col = "white"
+  ) +
+  geom_hline(aes(yintercept = 0)) +
+  scale_fill_manual(values = color_pal[c(2, 7)]) +
+  facet_grid(cols = vars(btw), switch = "x", space = "free_x", scale = "free_x") +
+  labs(
+    title = "Zuschauerinteresse an den TV-Duellen im Bundestagswahlkampf",
+    subtitle = "Zuschauer in Mio.",
+    caption = "Daten: Wikipedia, eigene Recherche. 
+    Visualisierung: Ansgar Wolsing & Thorsten Faas",
+    fill = NULL
+   ) +
+   theme(
+    legend.position = "top",
+    legend.justification = "left",
+    axis.text.y = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    panel.spacing.x = unit(5, "mm"),
+    plot.caption = element_textbox(margin = margin(t = 6, b = 6)),
+    strip.text.x.bottom = element_markdown(
+      family = "Roboto Condensed SemiBold",
+      vjust = 1,
+      margin = margin(t = 0))
+  )
+  
 ```
