@@ -62,9 +62,9 @@ tables <- map(links_kombi, function(x) {
 tables <- set_names(tables, str_remove(links_kombi, base_url))
 ```
 
-##### Extrahierte HTML-Tabellen aufbereiten
+#### Extrahierte HTML-Tabellen aufbereiten
 
-Zunächst nur die aktuellsten Umfragen (ab 2017)
+##### Zunächst nur die aktuellsten Umfragen (ab 2017)
 
 ```{r}
 tables_aktuell <- c(pluck(tables, "/politbarometer/stimmung.htm"),
@@ -106,6 +106,96 @@ df_poba_kombi <- df_projektion |>
   
 ```
 
+##### 2013-2017
+
+```{r}
+tables_2017 <- c(pluck(tables, "/politbarometer/stimmung-2017.htm"),
+                    pluck(tables, "/politbarometer/politbarometer-2017.htm"))
+names(tables_2017) <- c("stimmung", "projektion")
+
+df_stimmung_2017 <- tables_2017[["stimmung"]][, -c(2, 10)] |> 
+  tail(nrow(tables_2017[["stimmung"]]) - 3) |> 
+  rename(datum = 1) |> 
+  pivot_longer(cols = -c(datum), names_to = "partei", values_to = "anteil") |> 
+  filter(!str_detect(datum, "^Wahl")) |> 
+  mutate(
+    anteil = str_remove_all(anteil, "[-%]"),
+    anteil = as.numeric(anteil),
+    datum = dmy(datum)
+  ) |> 
+  # Unentschlossene und Nichtwähler + Summe entfernen
+  filter(!partei %in% c("Unent-schlossene", "Nicht-wähler", "Summe")) |> 
+  filter(!is.na(anteil))
+
+projektion_colnames_2017 <- as.character(tables_2017[["projektion"]][1, ])
+projektion_colnames_2017[c(1, 2, 10)] <- c("datum", "X1", "X2")
+colnames(tables_2017[["projektion"]]) <- projektion_colnames_2017
+
+df_projektion_2017 <- tables_2017[["projektion"]] |> 
+  select(-c(X1, X2)) |> 
+  tail(nrow(tables_2017[["stimmung"]]) - 3) |> 
+  filter(Zeitraum != "Bundestagswahl") |> 
+  pivot_longer(cols = -c(datum, Befragte, Zeitraum), 
+               names_to = "partei", values_to = "anteil") |> 
+   mutate(
+    anteil = str_remove_all(anteil, "[-%]"),
+    anteil = as.numeric(anteil),
+    datum = dmy(datum)
+  ) |> 
+  filter(!is.na(anteil))
+
+df_poba_kombi_2017 <- df_projektion_2017 |> 
+  left_join(df_stimmung_2017, by = join_by(datum, partei),
+            suffix = c(".projektion", ".stimmung")) |> 
+  filter(!is.na(anteil.stimmung))
+  
+```
+
+##### 2009-2013
+
+```{r}
+tables_2013 <- c(pluck(tables, "/politbarometer/stimmung-2013.htm"),
+                    pluck(tables, "/politbarometer/politbarometer-2013.htm"))
+names(tables_2013) <- c("stimmung", "projektion")
+
+df_stimmung_2013 <- tables_2013[["stimmung"]][, -c(2, 10)] |> 
+  tail(nrow(tables_2013[["stimmung"]]) - 3) |> 
+  rename(datum = 1) |> 
+  pivot_longer(cols = -c(datum), names_to = "partei", values_to = "anteil") |> 
+  filter(!str_detect(datum, "^Wahl")) |> 
+  mutate(
+    anteil = str_remove_all(anteil, "[-%]"),
+    anteil = as.numeric(anteil),
+    datum = dmy(datum)
+  ) |> 
+  # Unentschlossene und Nichtwähler + Summe entfernen
+  filter(!partei %in% c("Unent-schlossene", "Nicht-wähler", "Summe")) |> 
+  filter(!is.na(anteil))
+
+projektion_colnames_2013 <- as.character(tables_2013[["projektion"]][1, ])
+projektion_colnames_2013[c(1, 2, 11)] <- c("datum", "X1", "X2")
+colnames(tables_2013[["projektion"]]) <- projektion_colnames_2013
+
+df_projektion_2013 <- tables_2013[["projektion"]] |> 
+  select(-c(X1, X2)) |> 
+  tail(nrow(tables_2013[["stimmung"]]) - 3) |> 
+  filter(Zeitraum != "Bundestagswahl") |> 
+  pivot_longer(cols = -c(datum, Befragte, Zeitraum), 
+               names_to = "partei", values_to = "anteil") |> 
+   mutate(
+    anteil = str_remove_all(anteil, "[-%]"),
+    anteil = as.numeric(anteil),
+    datum = dmy(datum)
+  ) |> 
+  filter(!is.na(anteil))
+
+df_poba_kombi_2013 <- df_projektion_2013 |> 
+  left_join(df_stimmung_2013, by = join_by(datum, partei),
+            suffix = c(".projektion", ".stimmung")) |> 
+  filter(!is.na(anteil.stimmung))
+  
+```
+
 #### Ergebnisse Bundestagswahlen
 
 ```{r}
@@ -120,9 +210,11 @@ df_btw <- tribble(
 )
 ```
 
-```{r}
+```{r plot-poba-projektion-stimmung}
 df_poba_kombi |> 
-  filter(!partei %in% c("BSW", "FW", "Sonstige")) |> 
+  bind_rows(df_poba_kombi_2013) |> 
+  bind_rows(df_poba_kombi_2017) |> 
+  filter(!partei %in% c("BSW", "FW", "PIRATEN", "Sonstige")) |> 
   mutate(
     partei = case_match(
       partei,
@@ -130,7 +222,7 @@ df_poba_kombi |>
       "LINKE" ~ "Linke",
       .default = partei
     ),
-    partei = factor(partei, levels = c("CDU/CSU", "SPD", "AfD", "Grüne", "FDP", "Linke"))
+    partei2 = factor(partei, levels = c("CDU/CSU", "SPD", "AfD", "Grüne", "FDP", "Linke"))
   ) |> 
   ggplot(aes(datum)) +
   geom_line(
@@ -140,12 +232,12 @@ df_poba_kombi |>
     aes(y = anteil.projektion),
     col = color_pal[2], linewidth = 0.8
     ) +
-  # Bundestagswahlergebnisse
-  geom_point(
-    data = df_btw,
-    aes(as_date("2021-09-26"), anteil),
-    inherit.aes = FALSE, size = 3, shape = 21, color = "white", fill = color_pal[3]
-  ) +
+  # # Bundestagswahlergebnisse
+  # geom_point(
+  #   data = df_btw,
+  #   aes(as_date("2021-09-26"), anteil),
+  #   inherit.aes = FALSE, size = 3, shape = 21, color = "white", fill = color_pal[3]
+  # ) +
   scale_color_manual(values = party_pal) +
   facet_wrap(vars(partei)) +
   guides(color = "none") +
@@ -157,6 +249,50 @@ df_poba_kombi |>
   theme(
     strip.text = element_text(family = "Roboto Condensed SemiBold", size = 11)
   )
+```
+
+#### Differenz Projektion vs. Politische Stimmung
+
+```{r plot-poba-differenz-projektion-stimmung}
+
+df_poba_kombi |> 
+  bind_rows(df_poba_kombi_2013) |> 
+  bind_rows(df_poba_kombi_2017) |> 
+  filter(!partei %in% c("BSW", "FW", "PIRATEN", "Sonstige")) |> 
+  mutate(
+    partei = case_match(
+      partei,
+      "GRÜNE" ~ "Grüne",
+      "LINKE" ~ "Linke",
+      .default = partei
+    ),
+    partei = factor(partei, levels = c("CDU/CSU", "SPD", "AfD", "Grüne", "FDP", "Linke")),
+    anteil.differenz = anteil.projektion - anteil.stimmung
+  ) |> 
+  ggplot(aes(datum)) +
+  geom_hline(aes(yintercept = 0)) +
+  geom_smooth(
+    aes(y = anteil.differenz),
+    col = color_pal[2], linewidth = 0.8,
+    method = "loess", span = 0.5) +
+  scale_x_date(
+    date_breaks = "4 years",
+    date_labels = "%Y"
+  ) +
+  scale_y_continuous(
+    breaks = seq(-10, 10, 2),
+    labels = scales::label_number(style_positive = "plus", suffix = "%")) +
+  facet_wrap(vars(partei)) +
+  labs(
+    title = "Projektion vs. politische Stimmung nach Parteien",
+    subtitle = "Ein positiver Wert bedeutet, dass ein Partei in einer Projektion einen höheren Anteil der Stimmen erhält als sie in der politischen Stimmung hat", 
+    caption = "Daten: Politbarometer (geglättete Werte)",
+    x = NULL, y = "Anteil (%)"
+  ) +
+  theme(
+    strip.text = element_text(family = "Roboto Condensed SemiBold", size = 11)
+  )
+
 ```
 
 ### Trends BTW 2021 vs. 2025
@@ -172,7 +308,6 @@ table(df_dawum$Institute_Name)
 ```
 
 ```{r}
-
 
 selected_institutes <- c("Allensbach", "Forsa", "Forschungsgruppe Wahlen", "Infratest dimap",
                          "Verian (Emnid)", "YouGov", "Ipsos", "INSA")
@@ -234,12 +369,12 @@ p <- df_dawum |>
   )
 ```
 
-```{r}
+```{r plot-bewegung-umfragen-gleiche-skala}
 p + facet_wrap(vars(Party_Shortcut)) +
   coord_cartesian(ylim = c(0, NA)) 
 ```
 
-```{r}
+```{r plot-bewegung-umfragen-variable-skala}
 p + facet_wrap(vars(Party_Shortcut), scales = "free_y") +
   # scale_y_continuous(breaks = seq(0, 100, 5)) +
   coord_cartesian(ylim = c(0, NA)) +
