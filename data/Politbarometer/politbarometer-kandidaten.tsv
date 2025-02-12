@@ -1,30 +1,30 @@
-wahl	kandidat	partei	bewertung	quelle
-1980	Schmidt	SPD	2.8	ZA1053
-1980	Strauß	CSU	-0.2	ZA1053
-1983	Kohl	CDU	1.4	ZA2209
-1983	Vogel	SPD	0.8	ZA2209
-1987	Kohl	CDU	0.6	ZA1899
-1987	Rau	SPD	0.8	ZA1899
-1990	Kohl	CDU	2.0	ZA1920
-1990	Lafontaine	SPD	1.3	ZA1920
-1994	Kohl	CDU	1.1	ZA2546
-1994	Scharping	SPD	0.9	ZA2546
-1998	Kohl	CDU	0.2	ZA3160
-1998	Schröder	SPD	1.1	ZA3160
-2002	Schröder	SPD	1.8	ZA3851
-2002	Stoiber	CSU	0.7	ZA3851
-2005	Schröder	SPD	1.2	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2005/September_II/
-2005	Merkel	CDU	1.0	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2005/September_II/
-2009	Merkel	CDU	2.1	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2009/September_III/
-2009	Steinmeier	SPD	1.5	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2009/September_III/
-2013	Merkel	CDU	2.2	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2013/September_II_2013/
-2013	Steinbrück	SPD	0.8	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2013/September_II_2013/
-2017	Merkel	CDU	1.9	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2017/September_III_2017/
-2017	Schulz	SPD	1.1	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2017/September_III_2017/
-2021	Merkel	CDU	2.4	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2021/September_III_2021/
-2021	Scholz	SPD	1.6	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2021/September_III_2021/
-2021	Laschet	CDU	-0.4	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2021/September_III_2021/
-2021	Baerbock	Grüne	0.1	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2021/September_III_2021/
-2025	Scholz	SPD	-0.7	https://www.forschungsgruppe.de/Aktuelles/Politbarometer/
-2025	Merz	CDU	-0.5	https://www.forschungsgruppe.de/Aktuelles/Politbarometer/
-2025	Habeck	Grüne	-0.3	https://www.forschungsgruppe.de/Aktuelles/Politbarometer/
+wahl	kandidat	partei	bewertung	quelle	gewaehlter_kanzler
+1980	Schmidt	SPD	2.8	ZA1053	TRUE
+1980	Strauß	CSU	-0.2	ZA1053	FALSE
+1983	Kohl	CDU	1.4	ZA2209	TRUE
+1983	Vogel	SPD	0.8	ZA2209	FALSE
+1987	Kohl	CDU	0.6	ZA1899	TRUE
+1987	Rau	SPD	0.8	ZA1899	FALSE
+1990	Kohl	CDU	2.0	ZA1920	TRUE
+1990	Lafontaine	SPD	1.3	ZA1920	FALSE
+1994	Kohl	CDU	1.1	ZA2546	TRUE
+1994	Scharping	SPD	0.9	ZA2546	FALSE
+1998	Kohl	CDU	0.2	ZA3160	FALSE
+1998	Schröder	SPD	1.1	ZA3160	TRUE
+2002	Schröder	SPD	1.8	ZA3851	TRUE
+2002	Stoiber	CSU	0.7	ZA3851	FALSE
+2005	Schröder	SPD	1.2	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2005/September_II/	FALSE
+2005	Merkel	CDU	1.0	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2005/September_II/	TRUE
+2009	Merkel	CDU	2.1	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2009/September_III/	TRUE
+2009	Steinmeier	SPD	1.5	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2009/September_III/	FALSE
+2013	Merkel	CDU	2.2	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2013/September_II_2013/	TRUE
+2013	Steinbrück	SPD	0.8	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2013/September_II_2013/	FALSE
+2017	Merkel	CDU	1.9	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2017/September_III_2017/	TRUE
+2017	Schulz	SPD	1.1	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2017/September_III_2017/	FALSE
+2021	Merkel	CDU	2.4	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2021/September_III_2021/	FALSE
+2021	Scholz	SPD	1.6	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2021/September_III_2021/	TRUE
+2021	Laschet	CDU	-0.4	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2021/September_III_2021/	FALSE
+2021	Baerbock	Grüne	0.1	https://www.forschungsgruppe.de/Umfragen/Politbarometer/Archiv/Politbarometer_2021/September_III_2021/	FALSE
+2025	Scholz	SPD	-0.7	https://www.forschungsgruppe.de/Aktuelles/Politbarometer/	FALSE
+2025	Merz	CDU	-0.5	https://www.forschungsgruppe.de/Aktuelles/Politbarometer/	FALSE
+2025	Habeck	Grüne	-0.3	https://www.forschungsgruppe.de/Aktuelles/Politbarometer/	FALSE
