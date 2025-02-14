@@ -120,7 +120,7 @@ df_skalo |>
   guides(fill = "none") +
   labs(
     title = "Erstmals sämtliche Kanzlerkandidaten im Schnitt negativ bewertet",
-    subtitle = "Bewertung der Kandidat:innen in der jeweils letzten Politbarometer-Erhebung vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar I)",
+    subtitle = "Bewertung der Kandidat:innen in der jeweils letzten Politbarometer-Erhebung vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar II)",
     caption = "Daten: Politbarometer (via GESIS & forschungsgruppe.de).
     Visualisierung: Ansgar Wolsing & Thorsten Faas",
     x = NULL, y = NULL # "Bewertung"
@@ -208,7 +208,7 @@ df_skalo |>
   guides(fill = "none") +
   labs(
     title = "2025 erstmals sämtliche Kanzlerkandidaten negativ bewertet",
-    subtitle = "Bewertung der Kandidat:innen in der jeweils letzten Politbarometer-Erhebung vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar I)",
+    subtitle = "Bewertung der Kandidat:innen in der jeweils letzten Politbarometer-Erhebung vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar II)",
     caption = paste(
       paste(
         "Nicht genannte Kandidaten: ",
@@ -306,7 +306,7 @@ df_skalo |>
         paste("Nicht genannte Kandidaten:",
        paste(kandidaten_hinweis$wahl_kandidat_label, collapse = ", ")),
        "Bewertung der Kandidat:innen in der jeweils letzten Politbarometer-Erhebung 
-       vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar I)",
+       vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar II)",
       "Daten: Politbarometer (via GESIS & forschungsgruppe.de).
         Visualisierung: Ansgar Wolsing & Thorsten Faas", sep = "<br><br>"
     )),
@@ -413,7 +413,7 @@ df_skalo |>
     subtitle = "Bewertungen im Politbarometer",
     caption = paste(
        "Bewertung der Kandidat:innen in der jeweils letzten Politbarometer-Erhebung 
-       vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar I)",
+       vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar II)",
       "Daten: Politbarometer (via GESIS & forschungsgruppe.de).
         Visualisierung: Ansgar Wolsing & Thorsten Faas", sep = "<br><br>"
     ),
@@ -498,7 +498,7 @@ df_skalo |>
     subtitle = "Bewertungen im Politbarometer",
     caption = paste(
        "Bewertung der Kandidat:innen in der jeweils letzten Politbarometer-Erhebung 
-       vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar I)",
+       vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar II)",
       "Daten: Politbarometer (via GESIS & forschungsgruppe.de).
         Visualisierung: Ansgar Wolsing & Thorsten Faas", sep = "<br><br>"
     ),
@@ -579,7 +579,7 @@ df_skalo |>
     subtitle = "Bewertungen im Politbarometer",
     caption = paste(
        "Bewertung der Kandidat:innen in der jeweils letzten Politbarometer-Erhebung 
-       vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar I)",
+       vor der Bundestagswahl auf einer Skala von -5 bis +5 (2025: Politbarometer Februar II)",
       "Daten: Politbarometer (via GESIS & forschungsgruppe.de).
         Visualisierung: Ansgar Wolsing & Thorsten Faas", sep = "<br><br>"
     ),
