@@ -354,7 +354,9 @@ p_beeswarm_2021 <- df_wk_abstand |>
     aes(x0 = 0.205, y0 = 1, a = 0.04, b = 0.03, angle = pi / 3),
     linewidth = 0.2, linetype = "dashed",
   ) + 
-  scale_x_continuous(labels = scales::label_percent()) +
+  scale_x_continuous(
+    breaks = seq(0.25, 1, 0.25),
+    labels = scales::label_percent()) +
   scale_fill_manual(values = c("CSU" = "grey40", party_pal)) +
   scale_shape_manual(values = c("CDU" = 21, "SPD" = 21,
                                 "CSU" = 22, "Linke" = 23, "Grüne" = 24, "AfD" = 25)) +
@@ -414,7 +416,9 @@ p_beeswarm_1980 <- df_wk_abstand |>
   #   curvature = 0.2, linewidth = 0.2, 
   #   arrow = arrow(angle = 20, length = unit(0.25, "cm"))
   # ) +
-  scale_x_continuous(labels = scales::label_percent()) +
+  scale_x_continuous(
+    breaks = seq(0.25, 1, 0.25),
+    labels = scales::label_percent()) +
   scale_fill_manual(values = c("CSU" = "grey40", party_pal)) +
   scale_shape_manual(values = c("CDU" = 21, "SPD" = 21,
                                 "CSU" = 22, "Linke" = 23, "Grüne" = 24, 
@@ -467,7 +471,9 @@ df_wk_abstand |>
     color = "white", size = 2,
     shape = 21
   ) + 
-  scale_x_continuous(labels = scales::label_percent()) +
+  scale_x_continuous(
+    breaks = seq(0.25, 1, 0.25),
+    labels = scales::label_percent()) +
   scale_fill_manual(values = c("CSU" = "grey40", party_pal, "DP" = "grey80", "Zentrum" = "grey90")) +
   # scale_shape_manual(values = c("CDU" = 21, "SPD" = 21,
   #                               "CSU" = 22, "Linke" = 23, "Grüne" = 24, 
@@ -493,6 +499,67 @@ df_wk_abstand |>
     panel.grid.major.y = element_blank(),
     panel.grid.minor.y = element_blank(),
     strip.text = element_text(family = "Roboto Condensed SemiBold", size = 14)
+  ) 
+
+```
+
+##### Nochmal 2021 für sich
+
+```{r plot-beeswarm-erststimmen-2021-v02}
+
+df_wk_abstand |> 
+  filter(wahl  == "2021") |> 
+  ggplot(aes(anteil_gewinner, y = 1)) +
+  geom_quasirandom(
+    aes(fill = wk_gewinner_partei, shape = wk_gewinner_partei),
+    color = "white", size = 2
+  ) + 
+  annotate(
+    "text",
+    x = c(0.02, 0.45),
+    y = c(1.18, 1.23),
+    label = c(
+      "Diese fünf Direktmandate\nwurden mit den geringsten\nStimmenanteilen in der\nGeschichte der Bundes-\nrepublik gewonnen.",
+      "Nur ein einziger Direktkandidat\nholte mehr als 50 Prozent\n(Wahlkreis Aurich - Emden, SPD)"),
+    family = "Roboto Condensed", size = 4.5, hjust = 0, lineheight = 0.9
+  ) +
+  annotate(
+    GeomCurve,
+    x = c(0.52, 0.13), 
+    xend = c(0.528, 0.17),
+    y = c(1.15, 1.06), 
+    yend = c(1.03, 1),
+    curvature = 0.2, 
+    linewidth = 0.2, 
+    arrow = arrow(angle = 20, length = unit(0.25, "cm"))
+  ) +
+  ggforce::geom_ellipse(
+    aes(x0 = 0.205, y0 = 1, a = 0.04, b = 0.03, angle = pi / 3),
+    linewidth = 0.2, linetype = "dashed",
+  ) + 
+  scale_x_continuous(
+    breaks = seq(0.1, 1, 0.1),
+    labels = scales::label_percent()) +
+  scale_fill_manual(values = c("CSU" = "grey40", party_pal)) +
+  scale_shape_manual(values = c("CDU" = 21, "SPD" = 21,
+                                "CSU" = 22, "Linke" = 23, "Grüne" = 24, "AfD" = 25)) +
+  coord_cartesian(xlim = c(0.05, 0.6), clip = "off") +
+  guides(
+    fill = guide_legend(nrow = 1, override.aes = list(size = 5)),
+    shape = guide_legend(nrow = 1, override.aes = list(size = 5))
+  ) +
+  labs(
+    title = "Erststimmenanteile der Wahlkreisgewinner 2021",
+    x = "Erststimmenanteil (%)",
+    fill = NULL, shape = NULL
+  ) +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(family = "Roboto Condensed SemiBold"),
+    axis.text.y = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank()
   ) 
 
 ```
@@ -642,7 +709,7 @@ dfs_wk_abstand |>
     ) |>
   ggplot(aes(wahl, mean_anteil_gewinner_absolut, group = 1)) +
   geom_area(
-    color = color_pal[1], linewidth = 1.2, fill = alpha(color_pal[1], 0.1)) +
+    color = color_pal[2], linewidth = 1.2, fill = alpha(color_pal[2], 0.1)) +
   annotate(
     "text",
     x = c(1968, 2010),
@@ -655,7 +722,7 @@ dfs_wk_abstand |>
   geom_point(
     data = ~filter(., wahl %in% c(1972, 2021)),
     aes(),
-    col = color_pal[1], size = 3
+    col = color_pal[2], size = 3
   ) +
   annotate(
     GeomCurve,
@@ -669,8 +736,9 @@ dfs_wk_abstand |>
   scale_x_continuous(
     breaks = seq(1950, 2020, 10),
     expand = expansion(mult = c(0, 0.02))) +
-  scale_y_continuous(labels = scales::label_percent()) +
-  scale_color_manual(values = color_pal[2:4]) +
+  scale_y_continuous(
+    breaks = seq(0, 1, 0.25),
+    labels = scales::label_percent()) +
   coord_cartesian(ylim = c(0, NA), clip = "off") +
   labs(
     title = "Immer weniger mit absoluter Mehrheit gewonnene Direktmandate",
