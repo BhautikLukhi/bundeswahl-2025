@@ -455,7 +455,7 @@ p_beeswarm_1980 /
   plot_annotation(
     title = "Erststimmenanteile der Wahlkreisgewinner",
     caption = "Daten: Bundeswahlleiterin.
-    Visualisierung: Ansgar Wolsing & Thorsten Faas",)
+    Visualisierung: Ansgar Wolsing & Thorsten Faas")
 
 ```
 
@@ -543,13 +543,15 @@ df_wk_abstand |>
   scale_fill_manual(values = c("CSU" = "grey40", party_pal)) +
   scale_shape_manual(values = c("CDU" = 21, "SPD" = 21,
                                 "CSU" = 22, "Linke" = 23, "Grüne" = 24, "AfD" = 25)) +
-  coord_cartesian(xlim = c(0.05, 0.6), clip = "off") +
+  coord_cartesian(xlim = c(0.05, 0.65), clip = "off") +
   guides(
     fill = guide_legend(nrow = 1, override.aes = list(size = 5)),
     shape = guide_legend(nrow = 1, override.aes = list(size = 5))
   ) +
   labs(
     title = "Erststimmenanteile der Wahlkreisgewinner 2021",
+    caption = "Daten: Bundeswahlleiterin.
+    Visualisierung: Ansgar Wolsing & Thorsten Faas",
     x = "Erststimmenanteil (%)",
     fill = NULL, shape = NULL
   ) +
@@ -715,7 +717,7 @@ dfs_wk_abstand |>
     x = c(1968, 2010),
     y = c(0.53, 0.5),
     label = c("1972: mehr als 80 % der\nWahlkreise mit absoluter\nErststimmenmehrheit\ngewonnen",
-              "2021: ein einziger\nWahlkreis (Emden -\nAurich, SPD)"),
+              "2021: ein einziger\nWahlkreis (Aurich -\nEmden, SPD)"),
     family = "Roboto Condensed", hjust = 0, size = 4, lineheight = 0.9,
     vjust = 1
   ) +
