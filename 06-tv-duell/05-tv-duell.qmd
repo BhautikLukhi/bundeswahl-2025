@@ -705,6 +705,59 @@ df_zuschauer |>
   )
 ```
 
+#### Inkl. 2025
+
+```{r plot-zuschauer-tv-duelle-inkl-2025, fig.width=9, fig.height=6}
+btw_kandidaten <- tribble(
+  ~btw, ~kandidaten,
+  2002, "Schröder/Stoiber",
+  2005, "Schröder/Merkel",
+  2009, "Merkel/Steinmeier",
+  2013, "Merkel/Steinbrück",
+  2017, "Merkel/Schulz",
+  2021, "Laschet/Scholz/Baerbock",
+  2025, "Scholz/Merz/(Habeck/Weidel)"
+)
+
+df_zuschauer |>
+  inner_join(btw_kandidaten, by = join_by(btw)) |> 
+    mutate(
+      kandidate_label = case_when(
+         btw %in% c(2005:2017) ~ str_replace_all(kandidaten, "/", "/<br>"),
+         btw == 2025 ~ "Scholz/Merz/<br>(Habeck/Weidel",
+         TRUE ~ kandidaten
+      ),
+    btw_kandidaten_label = sprintf("<b style='font-size:12pt'>%s</b><br>%s", btw, kandidate_label)
+    ) |> 
+  ggplot(aes(sendungsnummer, zuschauer)) +
+  geom_col(
+    fill = color_pal[1]
+  ) +
+  geom_text(
+    aes(label = scales::number(zuschauer, accuracy = 0.1, decimal.mark = ",")),
+    vjust = 1, nudge_y = -0.5,
+    family = "Roboto Condensed SemiBold", col = "white"
+  ) +
+  geom_hline(aes(yintercept = 0)) +
+  facet_grid(cols = vars(btw_kandidaten_label), switch = "x", space = "free_x", scale = "free_x") +
+  labs(
+    title = "Zuschauerinteresse an den TV-Duellen im Bundestagswahlkampf",
+    subtitle = "Zuschauer in Mio.",
+    caption = "Daten: Wikipedia, eigene Recherche. Visualisierung: Ansgar Wolsing & Thorsten Faas"
+  ) +
+  theme(
+    axis.text = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    panel.spacing.x = unit(5, "mm"),
+    strip.text.x.bottom = element_markdown(
+      family = "Roboto Condensed",
+      vjust = 1,
+      margin = margin(t = 0))
+  )
+```
+
 #### Zuschauerzahlen ÖRR vs. Privat
 
 ```{r plot-zuschauer-tv-duelle-oerr-vs-privat}
