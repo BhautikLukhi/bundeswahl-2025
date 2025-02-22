@@ -142,8 +142,6 @@ df_party_connections <- df |>
   select(id.statement, party, answer.message) |> 
   mutate(party = ifelse(party == "CDU / CSU", "CDU/CSU", party)) |> 
   filter(party %in% selected_parties) |> 
-  # Neutrale Positionen entfernen (TODO: tbd)
-  # filter(answer.message != "Neutral") |> 
   mutate(statement_answer = paste(id.statement, answer.message, sep = "#")) |> 
   pairwise_count(party, statement_answer, diag = TRUE, upper = TRUE) |> 
   arrange(-n) |>
@@ -468,32 +466,44 @@ df_thesen_uebereinstimmungen <- df |>
 df_thesen_uebereinstimmungen
 ```
 
+#### Labels umcodieren
+
+Datei [LabelsWahloamt.xlsx]{.underline} ist nicht öffentlich verfügbar.
+
+```{r}
+library(readxl)
+
+df_wahlomat_labels <- read_xlsx(here("data", "LabelsWahloamt.xlsx"))
+colnames(df_wahlomat_labels) <- c("label", "label_update", "these")
+df_wahlomat_labels <- df_wahlomat_labels[, c("label", "label_update")]
+
+# Neues Label an den Datensatz anfügen
+df <- df |> 
+  inner_join(df_wahlomat_labels, by = "label")
+
+# Check
+df |> 
+  distinct(label, label_update) |> 
+  nrow() == 38
+```
+
 ```{r plot-thesen-parteien, fig.width=6, fig.height=7.2}
 df |> 
-  select(id.statement, label, party, answer.message) |> 
+  select(id.statement, label, label_update, party, answer.message) |> 
   inner_join(select(df_thesen_uebereinstimmungen, - answer.message), by = join_by(id.statement, label)) |> 
   mutate(
     party = case_match(
       party, 
       "CDU / CSU" ~ "CDU/CSU", 
       .default = party),
-    # party = factor(party, levels = selected_parties)),
-    label = case_match(
-      label,
-      "Grundgesetz" ~ "\"Verantwortung vor Gott\" im Grundgesetz",
-      "Krankenkassen" ~ "Gesetzliche Krankenkasse für alle",
-      "Ehrenamt" ~ "Ehrenamt auf Rente anrechnen",
-      "Schwangerschaftsabbruch nach Beratung" ~ "Schwangerschaftsabbruch nur nach Beratung",
-      .default = label
-    ),
-    label = fct_reorder(label, n_uebereinstimmende_parteien)) |> 
+    label_update = fct_reorder(label_update, n_uebereinstimmende_parteien)) |> 
   filter(party %in% selected_parties) |>
   mutate(
     party = ifelse(party == "Die Linke", "Linke", party),
     party = factor(party, levels = c("CDU/CSU", "FDP", "AfD", "BSW", "SPD", "GRÜNE", 
                                      "Linke"))
     ) |> 
-  ggplot(aes(party, label)) +
+  ggplot(aes(party, label_update)) +
   geom_tile(
     aes(fill = answer.message),
     color = "black", linewidth = 0.2, width = 0.91, height = 0.80
@@ -521,5 +531,74 @@ df |>
     panel.grid = element_blank(),
     plot.title = element_markdown(margin = margin(b = 36)),
     plot.caption = element_textbox(width = 1.5, margin = margin(t = 6, b = 12))
+  )
+```
+
+#### Mit den vier Parteien aus dem Tetraell
+
+```{r plot-thesen-parteien-tetraell, fig.width=4.5, fig.height=8}
+
+tetraell_parteien <- c("CDU/CSU", "SPD", "GRÜNE", "AfD")
+
+# Thesen für die 4 Parteien neu auszählen
+df_thesen_uebereinstimmungen_tetraell <- df |> 
+  mutate(
+    party = case_match(
+      party, 
+      "CDU / CSU" ~ "CDU/CSU", 
+      .default = party)
+    ) |> 
+  filter(party %in% tetraell_parteien) |> 
+  count(id.statement, label, answer.message, name = "n_uebereinstimmende_parteien") |> 
+  slice_max(order_by = n_uebereinstimmende_parteien, 
+            n = 1, with_ties = FALSE, by = id.statement) |> 
+  arrange(-n_uebereinstimmende_parteien)
+
+df |> 
+  select(id.statement, label, label_update, party, answer.message) |> 
+  inner_join(select(df_thesen_uebereinstimmungen_tetraell, - answer.message), by = join_by(id.statement, label)) |> 
+  mutate(
+    party = case_match(
+      party, 
+      "CDU / CSU" ~ "CDU/CSU", 
+      .default = party),
+    label_update = fct_reorder(label_update, n_uebereinstimmende_parteien)) |> 
+  filter(party %in% tetraell_parteien) |>
+  mutate(
+    party = ifelse(party == "Die Linke", "Linke", party),
+    party = factor(party, levels = c("CDU/CSU", "AfD", "SPD", "GRÜNE"))
+    ) |> 
+  ggplot(aes(party, label_update)) +
+  geom_tile(
+    aes(fill = answer.message),
+    color = "black", linewidth = 0.2, width = 0.3, height = 0.80
+  ) +
+  geom_hline(
+    aes(yintercept = as.numeric(label_update) + 0.5),
+    linewidth = 0.1
+  ) +
+  scale_x_discrete(position = "top", expand = c(0.2, 0)) +
+  scale_y_discrete(position = "right") +
+  scale_fill_brewer(palette = "PiYG", direction = -1) +
+  coord_cartesian(clip = "off") +
+  guides(fill = guide_legend(override.aes = list(color = "black", linewidth = 0.2))) +
+  labs(
+    title = "Wahl-O-Mat: Antworten der Parteien",
+    caption = "Daten: Wahl-O-Mat (via github.com/gockelhahn/qual-o-mat-data/).<br>
+    Visualisierung: Ansgar Wolsing & Thorsten Faas",
+    fill = NULL
+  ) +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0, 1.085),
+    legend.justification = "left",
+    legend.direction = "horizontal",
+    axis.title.x.top = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.y = element_text(family = "Roboto Condensed Medium", 
+                               hjust = 0, size = 9),
+    panel.grid = element_blank(),
+    plot.title = element_markdown(margin = margin(b = 50)),
+    plot.caption = element_textbox(width = 2.5, margin = margin(t = 6, b = 12))
   )
 ```
