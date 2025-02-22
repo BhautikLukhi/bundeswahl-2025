@@ -13,6 +13,7 @@ library(ggtext)
 library(here)
 library(rvest)
 library(dawumr)
+library(gt)
 
 knitr::opts_chunk$set(dev = "ragg_png")
 
@@ -299,12 +300,8 @@ df_poba_kombi |>
 
 #### Umfragedaten DAWUM
 
-```{r load-dawum, cache=TRUE}
+```{r load-dawum, cache=FALSE}
 df_dawum <- pull_dawum_dataframe()
-```
-
-```{r}
-table(df_dawum$Institute_Name)
 ```
 
 ```{r}
@@ -316,25 +313,28 @@ date_election_2021 <- as_date("2021-09-27")
 date_election_2025 <- as_date("2025-02-23")
 campaign_duration <- duration("3 months")
 
-p <- df_dawum |> 
+df_dawum_long <- df_dawum |> 
   filter(Parliament_Shortcut == "Bundestag" & Institute_Name %in% selected_institutes) |> 
   filter(Party_Shortcut %in% c("CDU/CSU", "SPD", "Grüne", "FDP", "AfD", "Linke")) |> 
   mutate(
     date_field = Survey_Period_Start + 
       difftime(Survey_Period_End, Survey_Period_End, unit = "days") / 2) |> 
   filter(
-    date_field >= date_election_2021 - campaign_duration & date_field < date_election_2021 |
-    date_field >= date_election_2025 - campaign_duration & date_field < date_election_2025
+    # date_field >= date_election_2021 - campaign_duration & date_field < date_election_2021 |
+    # date_field >= date_election_2025 - campaign_duration & date_field < date_election_2025
+    Date >= date_election_2021 - campaign_duration & Date < date_election_2021 |
+    Date >= date_election_2025 - campaign_duration & Date < date_election_2025
   ) |> 
-  # Zeitpunkt der Umfrage als Mittelpunkt der Feldzeit
   mutate(
     election_year = year(date_field),
     election_year = ifelse(election_year %in% 2024:2025, 2025, election_year),
     election_year = factor(election_year),
     week = isoweek(date_field),
     days_until_election = case_when(
-      election_year == 2021 ~ date_election_2021 - date_field,
-      election_year == 2025 ~ date_election_2025 - date_field
+      # election_year == 2021 ~ date_election_2021 - date_field,
+      # election_year == 2025 ~ date_election_2025 - date_field
+      election_year == 2021 ~ date_election_2021 - Date,
+      election_year == 2025 ~ date_election_2025 - Date
     ),
     days_until_election = as.integer(days_until_election)
   ) |> 
@@ -344,23 +344,78 @@ p <- df_dawum |>
     share = mean(Share), 
     days_until_election = round(mean(days_until_election)),
     .groups = "drop") |> 
-  mutate(Party_Shortcut = fct_reorder(Party_Shortcut, -share)) |> 
+  mutate(Party_Shortcut = fct_reorder(Party_Shortcut, -share))
+
+p <- df_dawum_long |> 
   ggplot(aes(days_until_election, share, color = election_year)) +
   geom_point(size = 0.2) +
   geom_smooth(
     aes(),
     method = "loess", span = 0.5
   ) +
-  scale_x_reverse() +
-  scale_color_manual(values = color_pal[c(2, 4)]) +
-  coord_cartesian(ylim = c(NA, NA)) +
+  scale_x_reverse(
+    expand = c(0, 0),
+    breaks = seq(98, 0, -14),
+    labels = function(x) x / 14) +
+  scale_y_continuous(labels = scales::label_number(decimal.mark = ",", suffix = "%")) +
+  scale_color_manual(values = c("grey50", color_pal[3])) +
+  coord_cartesian(xlim = c(NA, 0), ylim = c(0, NA), clip = "off") +
   labs(
-    title = "Bislang deutlich weniger Bewegung in den Umfragen als 2021",
-    subtitle = sprintf("Geglättete Stimmenanteile (%%) in Umfragen im Vorfeld der Bundestagswahlen
-                       <b style='color:%s'>2021</b> und <b style='color:%s'>2025</b>", 
-                       color_pal[2], color_pal[4]),
+    title = "2025 weniger Bewegung in den Umfragen als 2021",
+    subtitle = sprintf("Geglättete Stimmenanteile (%%) in Umfragen im Vorfeld der
+                       Bundestagswahlen <b style='color:%s'>2021</b> und
+                       <b style='color:%s'>2025</b>", 
+                       "grey50", color_pal[3]),
     caption = paste("Daten: DAWUM, Ergebnisse der Institute", 
-                    paste(selected_institutes, collapse = ", "),
+                    paste(selected_institutes, collapse = ", "), 
+                    "(bei mehreren Umfragen eines Instituts: Mittelwert der Umfragewerte, Stand: 21.02.2025).",
+                    "Visualisierung: Ansgar Wolsing & Thorsten Faas"),
+    x = "Anzahl Wochen bis zur Wahl", y = NULL
+  ) +
+  theme(
+    legend.position = "none", legend.justification = "left"
+  )
+```
+
+```{r plot-bewegung-umfragen-gleiche-skala}
+p + facet_wrap(vars(Party_Shortcut)) 
+```
+
+```{r plot-bewegung-umfragen-variable-skala}
+p + facet_wrap(vars(Party_Shortcut), scales = "free_y") +
+  labs(
+    subtitle = sprintf("Geglättete Stimmenanteile (%%) in Umfragen im Vorfeld der Bundestagswahlen
+                       <b style='color:%s'>2021</b> und <b style='color:%s'>2025</b>, 
+                       y-Achse je Partei skaliert", 
+                       "grey50", color_pal[3]),
+  )
+```
+
+##### Als Grid - Jahre als Spalten
+
+```{r plot-bewegung-umfragen-variable-skala-grid, fig.height=8}
+
+df_dawum_long |> 
+  ggplot(aes(days_until_election, share, color = election_year)) +
+  geom_point(size = 0.2) +
+  geom_smooth(
+    aes(),
+    method = "loess", span = 0.5
+  ) +
+  scale_x_reverse(expand = c(0, 0)) +
+  scale_y_continuous(labels = scales::label_number(decimal.mark = ",", suffix = "%")) +
+  scale_color_manual(values = c("grey50", color_pal[3])) +
+  coord_cartesian(xlim = c(NA, 0), # ylim = c(0, NA), 
+                  clip = "off") +
+  facet_wrap(Party_Shortcut ~ election_year, scales = "free_y", ncol = 2) +
+  labs(
+    subtitle = sprintf("Geglättete Stimmenanteile (%%) in Umfragen im Vorfeld der
+        Bundestagswahlen <b style='color:%s'>2021</b> und <b style='color:%s'>2025</b>, 
+        y-Achse je Partei skaliert", 
+                      "grey50", color_pal[3]),
+    caption = paste("Daten: DAWUM, Ergebnisse der Institute", 
+                    paste(selected_institutes, collapse = ", "), 
+                    "(Stand: 21.02.2025).",
                     "Visualisierung: Ansgar Wolsing & Thorsten Faas"),
     x = "Anzahl Tage bis zur Wahl", y = NULL
   ) +
@@ -369,19 +424,444 @@ p <- df_dawum |>
   )
 ```
 
-```{r plot-bewegung-umfragen-gleiche-skala}
-p + facet_wrap(vars(Party_Shortcut)) +
-  coord_cartesian(ylim = c(0, NA)) 
+```{r plot-bewegung-umfragen-variable-skala-grid-2}
+
+df_dawum_long |> 
+  ggplot(aes(days_until_election, share, color = election_year)) +
+  geom_point(size = 0.2) +
+  geom_smooth(
+    aes(),
+    method = "loess", span = 0.5
+  ) +
+  scale_x_reverse(expand = c(0, 0)) +
+  scale_y_continuous(labels = scales::label_number(decimal.mark = ",", suffix = "%")) +
+  scale_color_manual(values = c("grey50", color_pal[3])) +
+  coord_cartesian(xlim = c(NA, 0), # ylim = c(0, NA), 
+                  clip = "off") +
+  facet_grid(rows = vars(election_year), cols = vars(Party_Shortcut), scales = "free_y",
+             space = ) +
+  labs(
+    subtitle = sprintf("Geglättete Stimmenanteile (%%) in Umfragen im Vorfeld der
+        Bundestagswahlen <b style='color:%s'>2021</b> und <b style='color:%s'>2025</b>, 
+        y-Achse je Partei skaliert", 
+                      "grey50", color_pal[3]),
+    caption = paste("Daten: DAWUM, Ergebnisse der Institute", 
+                    paste(selected_institutes, collapse = ", "), 
+                    "(Stand: 21.02.2025).",
+                    "Visualisierung: Ansgar Wolsing & Thorsten Faas"),
+    x = "Anzahl Tage bis zur Wahl", y = NULL
+  ) +
+  theme(
+    legend.position = "none", legend.justification = "left"
+  )
 ```
 
-```{r plot-bewegung-umfragen-variable-skala}
-p + facet_wrap(vars(Party_Shortcut), scales = "free_y") +
-  # scale_y_continuous(breaks = seq(0, 100, 5)) +
-  coord_cartesian(ylim = c(0, NA)) +
-  labs(
-    subtitle = sprintf("Geglättete Stimmenanteile (%%) in Umfragen im Vorfeld der Bundestagswahlen
-                       <b style='color:%s'>2021</b> und <b style='color:%s'>2025</b>, 
-                       y-Achse je Partei skaliert", 
-                       color_pal[2], color_pal[4]),
+#### Umfrageergebnisse 2005 laden
+
+Quelle: Wahlrecht.de
+
+```{r load-umfragen-2005}
+
+df_umfragen_2005 <- read_delim(here("data", "umfragen-2005.tsv"))
+
+```
+
+```{r prep-umfragen-2005}
+
+date_election_2005 <- as_date("2005-09-18")
+
+df_umfragen_2005_long <- df_umfragen_2005 |> 
+  mutate(Datum = dmy(Datum)) |> 
+  filter(year(Datum) == 2005 & Datum < date_election_2005) |> 
+  select(-Sonstige) |> 
+  pivot_longer(cols = -c(Datum, Institut), names_to = "partei", values_to = "anteil") |> 
+  mutate(days_until_election = as.numeric(date_election_2005 - Datum))
+```
+
+```{r}
+
+df_umfragen_2005_long |> 
+  # LTW NRW
+  filter(Datum >= as_date("2005-05-27")) |> 
+  ggplot(aes(days_until_election, anteil)) +
+  geom_point(size = 0.5) +
+  geom_smooth(method = "loess", span = 0.5) +
+  scale_x_reverse() +
+  facet_wrap(vars(partei))
+```
+
+```{r}
+
+df_umfragen_2005_long |> 
+  # LTW NRW
+  filter(Datum >= as_date("2005-05-27")) |> 
+  filter(partei %in% c("CDU/CSU", "SPD")) |> 
+  ggplot(aes(days_until_election, anteil)) +
+  geom_smooth(
+    aes(col = partei),
+    method = "loess", span = 0.5) +
+  geom_point(
+    aes(col = partei),
+    size = 0.5) +
+  scale_x_reverse() +
+  scale_y_continuous(minor_breaks = seq(0, 100, 2)) +
+  coord_cartesian(ylim = c(20, NA)) +
+  scale_color_manual(values = party_pal) +
+  theme(
+    legend.position = "top",
+    legend.justification = "left"
   )
+  #facet_wrap(vars(partei))
+```
+
+```{r}
+df_dawum_long |> 
+  rename(partei = Party_Shortcut, anteil = share) |> 
+  filter(election_year == 2025) |>
+  filter(partei %in% c("CDU/CSU", "SPD", "AfD", "Grüne")) |> 
+  ggplot(aes(days_until_election, anteil)) +
+  geom_smooth(
+    aes(col = partei),
+    method = "loess", span = 0.5) +
+  geom_point(
+    aes(col = partei),
+    size = 0.5) +
+  scale_x_reverse() +
+  scale_y_continuous(minor_breaks = seq(0, 100, 2)) +
+  coord_cartesian(ylim = c(10, NA)) +
+  scale_color_manual(values = party_pal) +
+  theme(
+    legend.position = "top",
+    legend.justification = "left"
+  )
+```
+
+#### Veränderungen als Balkendiagramm
+
+##### 2005
+
+```{r plot-balken-diff-2005}
+
+polls_period <- duration("2 weeks")
+
+df_umfragen_2005_long |> 
+  # jeweils einen Monat ab 
+  # Auflösung Bundestag am 21.07.2005
+  filter(Datum >= as_date("2005-07-21"), Datum <= date_election_2005) |> 
+  mutate(
+    partei = case_match(
+      partei,
+      "GRÜNE" ~ "Grüne",
+      .default = partei
+    ),
+    period = case_when(
+      Datum <= min(Datum) + polls_period ~ "Anfang",
+      Datum >= max(Datum) - polls_period ~ "Ende"
+    ),
+    period = factor(period, levels = c("Anfang", "Ende"))
+  ) |> 
+  filter(!is.na(period)) |> 
+  group_by(partei, period) |> 
+  summarize(mean_anteil = mean(anteil)) |> 
+  summarize(diff_mean_anteil = last(mean_anteil) - first(mean_anteil)) |> 
+  ggplot(aes(diff_mean_anteil, partei)) +
+  geom_col(
+    aes(fill = partei),
+    alpha = 0.9, width = 0.75) +
+  scale_x_continuous(
+    breaks = seq(-10, 10, 1),
+    labels = scales::label_number(style_positive = "plus", decimal.mark = ",")) +
+  scale_fill_manual(values = party_pal) +
+  coord_cartesian(xlim = c(-3, 7)) +
+  guides(fill = "none") +
+  labs(
+    title = "Veränderungen in den Umfragen 2005",
+    subtitle = "Mittelwerte der Umfragen zwei Wochen ab Auflösung des Bundestags 
+    im Vergleich zu den entsprechenden Werte bis zwei Wochen vor der Wahl",
+    x = NULL, y = NULL
+  ) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    axis.text.y = element_text(family = "Roboto Condensed SemiBold")
+  )
+
+```
+
+##### 2021
+
+```{r plot-balken-diff-2021}
+
+
+df_dawum |> 
+  filter(Parliament_Shortcut == "Bundestag" & Institute_Name %in% selected_institutes) |> 
+  filter(Party_Shortcut %in% c("CDU/CSU", "SPD", "Grüne", "FDP", "AfD", "Linke")) |> 
+  filter(Date >= as_date("2021-07-01") & Date <= date_election_2021) |> 
+  # Pro Institute nur eine Umfrage pro Woche 
+  mutate(
+    week = isoweek(Date),
+  ) |> 
+  group_by(Institute_Name, Party_Shortcut, week) |> 
+  summarize(
+    anteil = mean(Share), 
+    Date = min(Date),
+    .groups = "drop") |> 
+  mutate(
+    period = case_when(
+      Date <= min(Date) + polls_period ~ "Anfang",
+      Date >= max(Date) - polls_period ~ "Ende"
+    ),
+    period = factor(period, levels = c("Anfang", "Ende"))) |> 
+  select(period, partei = Party_Shortcut, Institute_Name, anteil) |>
+  filter(!is.na(period)) |> 
+  group_by(partei, period) |> 
+  summarize(mean_anteil = mean(anteil)) |> 
+  summarize(diff_mean_anteil = last(mean_anteil) - first(mean_anteil)) |> 
+  ggplot(aes(diff_mean_anteil, partei)) +
+  geom_col(
+    aes(fill = partei),
+    alpha = 0.9, width = 0.75) +
+  scale_x_continuous(
+    breaks = seq(-10, 10, 1),
+    labels = scales::label_number(style_positive = "plus", decimal.mark = ",")) +
+  scale_fill_manual(values = party_pal) +
+  coord_cartesian(xlim = c(-3, 7)) +
+  guides(fill = "none") +
+  labs(
+    title = "Veränderungen in den Umfragen 2021",
+    subtitle = "ZEITRAUM XYZ // Mittelwerte der Umfragen zwei Wochen ab Auflösung des Bundestags 
+    im Vergleich zu den entsprechenden Werte im Zeitraum 31.01. bis 14.02.2025",
+    x = NULL, y = NULL
+  ) +
+  theme(
+    panel.grid.major.y = element_blank()
+  )
+
+```
+
+##### 2025
+
+-   <div>
+
+    ```{r plot-balken-diff-2025}
+
+    df_dawum |> 
+      filter(Parliament_Shortcut == "Bundestag" & Institute_Name %in% selected_institutes) |> 
+      filter(Party_Shortcut %in% c("CDU/CSU", "SPD", "Grüne", "FDP", "AfD", "Linke")) |> 
+      filter(Date >= as_date("2024-12-27") & Date <= date_election_2025) |> 
+      # Pro Institute nur eine Umfrage pro Woche 
+      mutate(
+        week = isoweek(Date),
+      ) |> 
+      group_by(Institute_Name, Party_Shortcut, week) |> 
+      summarize(
+        anteil = mean(Share), 
+        Date = min(Date),
+        .groups = "drop") |> 
+      mutate(
+        period = case_when(
+          Date <= min(Date) + polls_period ~ "Anfang",
+          Date >= max(Date) - polls_period ~ "Ende"
+        ),
+        period = factor(period, levels = c("Anfang", "Ende"))) |> 
+      select(period, partei = Party_Shortcut, Institute_Name, anteil) |>
+      filter(!is.na(period)) |> 
+      group_by(partei, period) |> 
+      summarize(mean_anteil = mean(anteil)) |> 
+      summarize(diff_mean_anteil = last(mean_anteil) - first(mean_anteil)) |> 
+      ggplot(aes(diff_mean_anteil, partei)) +
+      geom_col(
+        aes(fill = partei),
+        alpha = 0.9, width = 0.75) +
+      scale_x_continuous(
+        breaks = seq(-10, 10, 1),
+        labels = scales::label_number(style_positive = "plus", decimal.mark = ",")) +
+      scale_fill_manual(values = party_pal) +
+      coord_cartesian(xlim = c(-3, 7)) +
+      guides(fill = "none") +
+      labs(
+        title = "Veränderungen in den Umfragen 2025",
+        subtitle = "Mittelwerte der Umfragen zwei Wochen ab Auflösung des Bundestags 
+        im Vergleich zu den entsprechenden Werte im Zeitraum 31.01. bis 14.02.2025",
+        x = NULL, y = NULL
+      ) +
+      theme(
+        panel.grid.major.y = element_blank()
+      )
+
+    ```
+
+    </div>
+
+## RCS: Wahrnehmung von Umfragen
+
+```{r load-rcs-data}
+library(haven)
+library(labelled)
+
+df_rcs_2021 <- read_dta(here("data", "RCS", "ZA7703_v2-0-0.dta"))
+
+# Nur Vorwahlwelle
+df_rcs_2021 <- df_rcs_2021 |> 
+  filter(welle == 1)
+```
+
+### Auszählung
+
+#### Ungewichtet
+
+```{r}
+df_rcs_2021 |> 
+  mutate(pre045 = as_factor(pre045)) |> 
+  count(pre045) |> 
+  mutate(share = n / sum(n)) |> 
+  gt() |> 
+  fmt_percent(share)
+```
+
+#### Gewichtet
+
+Bildungs- und Transformationsgewicht (gesamt)
+
+```{r}
+df_rcs_2021 |> 
+  mutate(pre045 = as_factor(pre045)) |> 
+  count(pre045, wt = w_bil1g) |> 
+  mutate(share = n / sum(n)) |> 
+  gt() |> 
+  fmt_percent(share)
+```
+
+#### 
+
+1.  <div>
+
+    ```{r plot-umfragen-gesamt}
+    df_rcs_2021 |> 
+      filter(pre045 > 0) |> 
+      mutate(pre045 = as_factor(pre045)) |> 
+      count(pre045, wt = w_bil1g) |> 
+      mutate(share = n / sum(n)) |> 
+      mutate(label_pos_y = lead(share, default = 0) + share / 2) |> 
+      ggplot(aes(1, share, fill = pre045)) +
+      geom_col(position = "stack", col = "white") +
+      geom_richtext(
+        aes(y = label_pos_y,
+            label = sprintf("**%s**<br>%s", pre045, scales::percent(share)),
+            col = ifelse(pre045 == "ja", "white", "black")
+        ),
+        family = "Roboto Condensed", size = 5, 
+        fill = NA, label.size = 0
+      ) +
+      scale_fill_manual(values = c(color_pal[2], "grey60")) +
+      scale_color_identity() +
+      coord_radial(theta = "y", inner.radius = 0.5, expand = FALSE,
+                  direction = -1) +
+      guides(fill = "none") +
+      labs(
+        title = "Zwei Drittel der Befragten nehmen während<br>des Wahlkampfs
+        Meinungsumfragen wahr",
+        subtitle = "Anteil der Befragten, die im Wahlkampf 2021 in der Woche vor der Befragung Umfragen gesehen oder gelesen haben",
+        caption =  "Daten: German Longitudinal Election Study 2021. 
+        Visualisierung: Ansgar Wolsing & Thorsten Faas",
+      ) +
+      theme(
+        panel.grid = element_blank(),
+        axis.title = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        plot.title = element_markdown(hjust = 0.5),
+        plot.subtitle = element_textbox(hjust = 0.5, halign = 0.5, width = 1.4),
+        plot.caption = element_textbox(hjust = 0.5, margin = margin(t = 8, b = 12))
+      )
+    ```
+
+    </div>
+
+#### Entwicklung während des Wahlkampfs
+
+```{r plot-umfragen-2021, fig.width = 6, fig.height=6}
+
+df_rcs_2021 |> 
+  filter(pre_feldtag > 5) |> 
+  filter(pre045 > 0) |> 
+  mutate(
+    pre045 = as_factor(pre045),
+    days_to_election = max(pre_feldtag) + 1  - pre_feldtag) |> 
+  count(days_to_election, pre045, wt = w_bil1t) |> 
+  mutate(share = n / sum(n), .by = days_to_election) |> #View()
+  filter(pre045 == "ja") |> 
+  ggplot(aes(days_to_election, share)) +
+  stat_smooth(
+    geom = "area", method = "loess", span = 0.5, se = FALSE,
+    fill = alpha(color_pal[2], 0.2)) +
+  stat_smooth(
+    geom = "line", method = "loess", span = 0.5, se = FALSE,
+    col = color_pal[2], linewidth = 1) +
+  scale_x_reverse(
+    breaks = seq(7, 70, 7),
+    labels = function(x) x / 7
+  ) +
+  scale_y_continuous(
+    labels = scales::label_percent()
+  ) +
+  coord_cartesian(expand = FALSE, clip = "off") +
+  labs(
+    title = "Reichweite von Umfragen verdoppelt sich im Wahlkampf",
+    subtitle = "Anteil der Befragten, die im Wahlkampf 2021 in der Woche vor der Befragung Umfragen gesehen oder gelesen haben",
+    caption =  "Daten: German Longitudinal Election Study, Rolling Cross-Section 2021.<br> 
+    Visualisierung: Ansgar Wolsing & Thorsten Faas",
+    x = "Wochen bis zur Bundestagswahl", y = NULL
+  ) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    plot.title = element_markdown(size = 15),
+    plot.subtitle = element_textbox(margin = margin(t = 4, b = 28)),
+    axis.text = element_text(size = 12)
+  )
+```
+
+Könntest Du mal interessehalber Chart 1 differenzieren nach pos040h pos040i pos040j (Nachwahl)
+
+```{r}
+df_rcs_2021 |> 
+  filter(pre045 > 0, pos040h > 0) |> 
+  mutate(
+    across(c(pre045, pos040h), 
+           function(x) 
+             fct_drop(as_factor(x)))) |> 
+  count(pos040h, pre045, wt = w_bil1g) |> 
+  mutate(share = n / sum(n), .by = pos040h) |> 
+  gt(rowname_col = "pre045", groupname_col = "pos040h",
+     caption = paste("pos040h", var_label(df_rcs_2021$pos040j))) |> 
+  fmt_percent(share)
+
+```
+
+```{r}
+df_rcs_2021 |> 
+  filter(pre045 > 0, pos040i > 0) |> 
+  mutate(
+    across(c(pre045, pos040i), 
+           function(x) 
+             fct_drop(as_factor(x)))) |> 
+  count(pos040i, pre045, wt = w_bil1g) |> 
+  mutate(share = n / sum(n), .by = pos040i) |> 
+  gt(rowname_col = "pre045", groupname_col = "pos040i",
+     caption = paste("pos040i", var_label(df_rcs_2021$pos040j))) |> 
+  fmt_percent(share)
+```
+
+```{r}
+df_rcs_2021 |> 
+  filter(pre045 > 0, pos040j > 0) |> 
+  mutate(
+    across(c(pre045, pos040j), 
+           function(x) 
+             fct_drop(as_factor(x)))) |> 
+  count(pos040j, pre045, wt = w_bil1g) |> 
+  mutate(share = n / sum(n), .by = pos040j) |> 
+  gt(rowname_col = "pre045", groupname_col = "pos040j",
+     caption = paste("pos040j", var_label(df_rcs_2021$pos040j))) |> 
+  fmt_percent(share)
 ```
