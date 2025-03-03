@@ -38,6 +38,7 @@ party_pal <- c(
   "Grüne" = "#1AA037",
   "AfD" = "#0489DB",
   "Linke" = "#BD4459",
+  "Die Linke" = "#BD4459",
   "Linke.PDS" = "#BD4459",
   "BSW" = "#F39324"
   )
