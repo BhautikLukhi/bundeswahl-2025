@@ -13,6 +13,7 @@ library(ggtext)
 library(here)
 library(sf)
 library(ggbeeswarm)
+library(gganimate)
 
 knitr::opts_chunk$set(dev = "ragg_png")
 
@@ -343,6 +344,10 @@ df_erststimmen_bund <- df_wk_ergebnisse |>
 
 ## Visualisierung
 
+### Beeswarm
+
+Fläche der Wahlkreise nach Parteien
+
 ```{r plot-beeswarm}
 
 df_wk_abstand_area |> 
@@ -381,7 +386,7 @@ df_wk_abstand_area |>
 
 ```
 
-### Erststimmen vs. Fläche
+### Balkendiagramm Erststimmen vs. Fläche
 
 ```{r plot-erststimmen-vs-flaeche}
 df_parteien_erststimmen_area <- df_wk_abstand_area |> 
@@ -424,7 +429,7 @@ df_erststimmen_bund |>
 
 ```
 
-Größter AfD-Wahlkreis vs. kleinster Wahlkreis (Linke)
+#### Größter AfD-Wahlkreis vs. kleinster Wahlkreis (Linke)
 
 ```{r}
 df_wk_abstand_area |> 
@@ -476,54 +481,9 @@ shp_wk_centroids <- shp_wk |>
 
 ```
 
-#### Einzelne Centroids verschieben
+### Berechnetes Grid laden
 
-```{r move-centroids-1}
-
-# library(cartogram)
-# 
-# shp_wk_centroids_berlin <- shp_wk_centroids |> 
-#   filter(LAND_NR == "11" | WKR_NR == "61") |>  # include Potsdam
-#   mutate(dummy_weight = 10) |> 
-#   cartogram_dorling(weight = "dummy_weight", k = 12, m_weight = 1) |> 
-#   st_buffer(dist = 100)
-# 
-# max(st_area(shp_wk_centroids_berlin$geometry))
-```
-
-```{r move-centroids-2}
-
-# shp_wk_centroids_hh <- shp_wk_centroids |> 
-#   filter(LAND_NR == "02") |>  
-#   mutate(dummy_weight = 10) |> 
-#   cartogram_dorling(weight = "dummy_weight", k = 18, m_weight = 1) |> 
-#   st_buffer(dist = 2500)
-# 
-# max(st_area(shp_wk_centroids_hh$geometry))
-```
-
-```{r move-centroids-3}
-
-# shp_wk_centroids_koeln <- shp_wk_centroids |> 
-#   filter(WKR_NR %in% c("92", "93", "94", "100")) |>  
-#   mutate(dummy_weight = 10) |> 
-#   cartogram_dorling(weight = "dummy_weight", k = 20, m_weight = 0.6)  |> 
-#   st_buffer(dist = 5500)
-# 
-# max(st_area(shp_wk_centroids_koeln$geometry))
-```
-
-```{r move-centroids-4}
-
-# shp_wk_centroids_muc <- shp_wk_centroids |> 
-#   filter(WKR_NR %in% c("216", "217", "218", "219")) |>  
-#   mutate(dummy_weight = 10) |> 
-#   cartogram_dorling(weight = "dummy_weight", k = 25, m_weight = 1)  |> 
-#   st_buffer(dist = 4500)
-# 
-# max(st_area(shp_wk_centroids_muc$geometry))
-
-```
+Vorher find-nearest-grid-cell.R ausführen
 
 ```{r assign-grid-cells, cache=TRUE}
 
@@ -532,7 +492,6 @@ grid_wk <- read_rds(here("data", "Wahlkreise", "grid-wk.rds"))
 ```
 
 ```{r}
-
 shp_wk_centroids_shifted <- grid_wk |> 
  inner_join(df_wk_abstand, by = join_by(centroid_id == wknr)) |> 
   mutate(geometry = st_centroid(geometry)) |> 
@@ -540,26 +499,6 @@ shp_wk_centroids_shifted <- grid_wk |>
 ```
 
 ```{r map-centroids}
-
-# shp_wk_centroids_shifted <- shp_wk_centroids |> 
-#   filter(LAND_NR != "11" & WKR_NR != "61" 
-#          & LAND_NR != "02" & 
-#            !WKR_NR %in% c("92", "93", "94", "100") &
-#            !WKR_NR %in% c("216", "217", "218", "219")
-#            ) |> 
-#   bind_rows(shp_wk_centroids_berlin) |>
-#   bind_rows(shp_wk_centroids_hh) |> 
-#   bind_rows(shp_wk_centroids_koeln) |> 
-#   bind_rows(shp_wk_centroids_muc) |> 
-#   # Wieder alte Sortierung herstellen
-#   arrange(WKR_NR) |> 
-#   mutate(wk_gewinner_partei = if_else(wk_gewinner_partei %in% c("CDU", "CSU"),
-#                                    "CDU/CSU", wk_gewinner_partei),
-#        wk_gewinner_partei = factor(wk_gewinner_partei, 
-#                                    levels = c("CDU/CSU", "AfD", "SPD", 
-#                                               "Grüne", "Die Linke")))
-
-
 
 shp_wk_centroids_shifted |> 
   ggplot(aes(fill = wk_gewinner_partei)) +
@@ -579,9 +518,9 @@ shp_wk_centroids_shifted |>
   )
 ```
 
-```{r map-animation}
+### Animation
 
-library(gganimate)
+```{r map-animation}
 
 shp_bundeslaender <- shp_wk |> 
   group_by(LAND_NR) |> 
@@ -663,4 +602,34 @@ ggplot() +
     color = "purple", size = 1
   ) +
   theme_void()
+```
+
+### Länge der Wahlkreis-Namen
+
+```{r}
+shp_wk |> 
+  st_drop_geometry() |> 
+  transmute(
+    WKR_NAME,
+    name_length = str_length(WKR_NAME)
+    ) |> 
+  arrange(-name_length) |> 
+  head(10)
+```
+
+```{r plot-histogram-wknamen-laenge}
+
+shp_wk |> 
+  st_drop_geometry() |> 
+  transmute(name_length = str_length(WKR_NAME)) |> 
+  ggplot(aes(name_length)) +
+  geom_histogram(binwidth = 5, fill = color_pal[2]) +
+  labs(
+    title = "Zeichenlänge der Wahlkreisnamen",
+    x = "Anzahl Zeichen", y = "Anzahl Wahlkreise"
+  ) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )
 ```
