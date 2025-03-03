@@ -518,9 +518,85 @@ shp_wk_centroids_shifted |>
   )
 ```
 
+#### Bubble-Größe variiert
+
+##### Nach Erststimmenanteil
+
+```{r map-centroids-bubble}
+
+shp_wk_centroids_shifted |> 
+  st_centroid() |> 
+  # mutate(
+  #   coord_x = st_coordinates(st_centroid(geometry))[, "X"],
+  #   coord_y = st_coordinates(st_centroid(geometry))[, "Y"]) |> 
+  # st_drop_geometry() |> 
+  ggplot(aes(fill = wk_gewinner_partei)) +
+  geom_sf(
+    aes(size = anteil_gewinner),
+    shape = 21, color = "white", alpha = 0.8) +
+  scale_fill_manual(values = party_pal) +
+  scale_size_area(max_size = 3) +
+  # coord_fixed() +
+  labs(
+    title = "Gewonnene Wahlkreise nach Parteien (Erststimmen)",
+    caption = "Daten: Bundeswahlleiterin. Visualisierung: Ansgar Wolsing",
+    fill = NULL
+  ) +
+  theme(
+    panel.grid = element_blank(),
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.text.x = element_blank()
+  )
+```
+
+##### Nach Abstand zum Zweiten
+
+```{r map-centroids-bubble-abstand}
+
+shp_wk_centroids_shifted |> 
+  st_centroid() |> 
+  mutate(wk_gewinner_partei = if_else(wk_gewinner_partei %in% c("CDU", "CSU"),
+                                     "CDU/CSU", wk_gewinner_partei),
+         wk_gewinner_partei = factor(wk_gewinner_partei, 
+                                     levels = c("CDU/CSU", "AfD", "SPD", 
+                                                "Grüne", "Die Linke"))) |> 
+  ggplot(aes(fill = wk_gewinner_partei)) +
+  geom_sf(
+    aes(size = wk_abstand),
+    shape = 21, color = "white", alpha = 0.8) +
+  scale_fill_manual(values = party_pal) +
+  scale_size_area(max_size = 4, labels = scales::label_percent()) +
+  guides(
+    fill = guide_legend(order = 1, override.aes = list(size = 2)),
+    size = guide_legend(order = 2, override.aes = list(color = "grey20"))
+  ) +
+  labs(
+    title = "Gewonnene Wahlkreise nach Parteien",
+    subtitle = "(Erststimmen)",
+    caption = "Daten: Bundeswahlleiterin. Visualisierung: Ansgar Wolsing",
+    fill = "Wahlkreisbester",
+    size = "Abstand Zweitplatzierte(r)"
+  ) +
+  theme(
+    panel.grid = element_blank(),
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.text.x = element_blank(),
+    plot.title = element_markdown(hjust = 0.5, size = 12),
+    plot.subtitle = element_textbox(hjust = 0.5, halign = 0.5, size = 11),
+    plot.caption = element_textbox(hjust = 0.5, halign = 0.5, size = 7, width = 1.6),
+    legend.position = "bottom",
+    legend.text = element_text(size = 8),
+    legend.justification = "center",
+    legend.direction = "vertical",
+    legend.key.size = unit(0.2, "cm")
+  )
+```
+
 ### Animation
 
-```{r map-animation}
+```{r map-animation, cache=TRUE}
 
 shp_bundeslaender <- shp_wk |> 
   group_by(LAND_NR) |> 
