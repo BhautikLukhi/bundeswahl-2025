@@ -300,7 +300,7 @@ df_poba_kombi |>
 
 #### Umfragedaten DAWUM
 
-```{r load-dawum, cache=FALSE}
+```{r load-dawum, cache=TRUE}
 df_dawum <- pull_dawum_dataframe()
 ```
 
@@ -355,8 +355,8 @@ p <- df_dawum_long |>
   ) +
   scale_x_reverse(
     expand = c(0, 0),
-    breaks = seq(98, 0, -14),
-    labels = function(x) x / 14) +
+    breaks = seq(98, 1, -14),
+    labels = function(x) x / 7) +
   scale_y_continuous(labels = scales::label_number(decimal.mark = ",", suffix = "%")) +
   scale_color_manual(values = c("grey50", color_pal[3])) +
   coord_cartesian(xlim = c(NA, 0), ylim = c(0, NA), clip = "off") +
@@ -373,7 +373,8 @@ p <- df_dawum_long |>
     x = "Anzahl Wochen bis zur Wahl", y = NULL
   ) +
   theme(
-    legend.position = "none", legend.justification = "left"
+    legend.position = "none", legend.justification = "left",
+    panel.grid.minor.x = element_blank() 
   )
 ```
 
