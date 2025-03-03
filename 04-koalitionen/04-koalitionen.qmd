@@ -449,7 +449,7 @@ Welche Koalitionen hätten welchen Rückhalt im Bundesrat, gemessen über den An
 ```{r}
 
 df_hypothetische_koalitionen <- tibble(
-  bund_koalition = c("CDU, CSU, Grüne", "CDU, CSU, SPD", "CDU, CSU, SPD, Grüne")
+  bund_koalition = c("CDU, CSU, Grüne", "CDU, CSU, SPD", "CDU, CSU, SPD, Grüne", "CDU, CSU, SPD, FDP", "CDU, CSU, Grüne, FDP", "CDU, CSU", "CDU, CSU, FDP")
 )
 
 df_bundesrat_bundesregierung_hypothetisch <- 
@@ -492,4 +492,47 @@ df_uebereinstimmungen_hypothetisch <- df_bundesrat_bundesregierung_hypothetisch 
     anteil_stimmen_uebereinstimmung = n_stimmen_uebereinstimmung / sum(stimmen),,
     .groups = "drop")
 df_uebereinstimmungen_hypothetisch
+```
+
+```{r plot-uebereinstimmungen-hypothetisch}
+
+df_uebereinstimmungen_hypothetisch |> 
+  mutate(bund_koalition_art = case_when(
+    bund_koalition == "Union" ~ "Minderheitsregierung",
+    bund_koalition == "Union, FDP" ~ "Minderheitsregierung",
+    bund_koalition %in% c("Union, Grüne, FDP", "Union, SPD, FDP", 
+                          "Union, SPD, Grüne") ~ "Zweierbündnis",
+    TRUE ~ "Dreierbündnis"
+  ),
+  bund_koalition = ifelse(bund_koalition_art == "Minderheitsregierung", 
+                          paste0(bund_koalition, "*"), bund_koalition),
+  bund_koalition = fct_reorder(bund_koalition, anteil_stimmen_uebereinstimmung)
+  ) |> 
+  ggplot(aes(anteil_stimmen_uebereinstimmung, bund_koalition)) +
+  geom_col(aes(x = 1), fill = "grey80", width = 0.75) +
+  geom_col(fill = color_pal[2], width = 0.75) +
+  geom_text(
+    aes(
+      label = scales::percent(anteil_stimmen_uebereinstimmung, accuracy = 1),
+      col = ifelse(anteil_stimmen_uebereinstimmung < 0.05, "black", "white"),
+      hjust = ifelse(anteil_stimmen_uebereinstimmung < 0.05, -0.4, 1.3)),
+    family = "Roboto Condensed Medium"
+  ) +
+  scale_x_continuous(labels = scales::label_percent(), expand = c(0, 0)) +
+  scale_color_identity() +
+  guides(col = "none") +
+  labs(
+    title = "Rückhalt verschiedener Koalitionen im Bundesrat",
+    subtitle = "Gewichteter Anteil der Stimmen der Länder (in %)",
+    caption = "\\* Nach aktuellen Umfragen Minderheitsregierung<br><br>
+    Gezählt werden die unterschiedlichen Kombinationen von Parteien 
+    **unter Berücksichtigung** der Partei des/der Ministerpräsidenten/-in.<br>
+    Daten: Bundesrat. Visualisierung: Ansgar Wolsing & Thorsten Faas",
+    x = NULL, y = NULL
+  ) +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(family = "Roboto Condensed Medium")
+  )
 ```
