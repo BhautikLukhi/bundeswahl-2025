@@ -122,12 +122,10 @@ load_data <- function(year) {
       header_3 != "" & !is.na(header_3), 
       paste(colnames_combined, header_3, sep = "_"), colnames_combined)
   }
-  # head(colnames_combined, 10)
   
   # Daten vollständig einlesen
   df_wk <- read_csv2(filename, skip = skip_rows + 2, col_names = FALSE,
                      show_col_types = FALSE)
-  # df_wk <- select(df_wk, where(has_data))
   colnames(df_wk) <- colnames_combined
   
   # In manchen Dateien sind leere Spalten ohne Spaltennamen (NA) enthalten
@@ -363,7 +361,6 @@ df_wk_abstand_area |>
   scale_fill_manual(values = c("CSU" = "grey40", party_pal),
                     aesthetics = list("fill", "color")) +
   guides(
-    # fill = guide_legend(nrow = 1, override.aes = list(size = 5), reverse = TRUE),
     fill = "none",
     shape = guide_legend(nrow = 1, override.aes = list(size = 5))
   ) +
@@ -526,17 +523,12 @@ shp_wk_centroids_shifted |>
 
 shp_wk_centroids_shifted |> 
   st_centroid() |> 
-  # mutate(
-  #   coord_x = st_coordinates(st_centroid(geometry))[, "X"],
-  #   coord_y = st_coordinates(st_centroid(geometry))[, "Y"]) |> 
-  # st_drop_geometry() |> 
   ggplot(aes(fill = wk_gewinner_partei)) +
   geom_sf(
     aes(size = anteil_gewinner),
     shape = 21, color = "white", alpha = 0.8) +
   scale_fill_manual(values = party_pal) +
   scale_size_area(max_size = 3) +
-  # coord_fixed() +
   labs(
     title = "Gewonnene Wahlkreise nach Parteien (Erststimmen)",
     caption = "Daten: Bundeswahlleiterin. Visualisierung: Ansgar Wolsing",
