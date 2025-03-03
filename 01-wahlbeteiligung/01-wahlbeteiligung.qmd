@@ -274,7 +274,7 @@ p <- df_wbt_total_ab1972 |>
   theme(plot.margin = margin(t = 4, l = 4, r = 50, b = 4))
 
 p_anim <- p +
-  transition_states(wahl) +
+  transition_states(wahl, wrap = FALSE) +
   shadow_mark(past = TRUE, future = FALSE, 
               alpha = 0.2, linewidth = 0.33, 
               # Jahreszahlen nicht mitführen
@@ -284,6 +284,12 @@ animate(p_anim, fps = 10, nframes = 60, end_pause = 8, rewind = FALSE,
        res = 150, width = 960, height = 800, units = "px")
 anim_save(
   here("01-wahlbeteiligung", "plots", "wbt-altersgruppen-geschlecht.gif"))
+
+n_frames <- length(unique(df_wbt_total_ab1972$wahl)) * 5 + 8
+animate(p_anim, fps = 10, nframes = n_frames, end_pause = 8, rewind = FALSE,
+       res = 150, width = 960, height = 800, units = "px", renderer = av_renderer())
+anim_save(
+  here("01-wahlbeteiligung", "plots", "wbt-altersgruppen-geschlecht.mp4")) 
 ```
 
 ### Wähler nach Altersgruppen
