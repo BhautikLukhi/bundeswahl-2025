@@ -1,5 +1,6 @@
 library(sf)
 library(dplyr)
+library(readr)
 library(here)
 
 shp_wk <- st_read(here("data", "Wahlkreise", "btw25_geometrie_wahlkreise_shp_geo",
@@ -8,7 +9,7 @@ shp_wk <- st_read(here("data", "Wahlkreise", "btw25_geometrie_wahlkreise_shp_geo
 
 shp_centroids_wk <- st_centroid(shp_wk)
 
-# Create a grid covering the bounding box of your geometries
+# Create a grid covering the bounding box
 grid_sf <- st_make_grid(shp_wk, cellsize = 0.25, square = TRUE) |> 
   st_sf() |> 
   st_filter(shp_wk) |> 
@@ -38,7 +39,7 @@ nearest_grid <- function(centroids, grid_sf) {
           cell_id = cell_id,
           geometry = st_geometry(chosen_cell)
         ))
-        break  # Stop after assigning a valid grid cell
+        break  # Stop after assigning a grid cell
       }
     }
   }
@@ -47,4 +48,4 @@ nearest_grid <- function(centroids, grid_sf) {
 }
 
 grid_wk <- nearest_grid(shp_centroids_wk, grid_sf)
-readr::write_rds(grid_wk, here("data", "Wahlkreise", "grid-wk.rds"))
+write_rds(grid_wk, here("data", "Wahlkreise", "grid-wk.rds"))
