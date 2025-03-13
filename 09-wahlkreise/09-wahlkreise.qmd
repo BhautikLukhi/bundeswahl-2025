@@ -1,5 +1,5 @@
 ---
-title: "xx Wahlkreise"
+title: "09 Wahlkreise"
 format:
   html:
     code-fold: true
@@ -588,11 +588,13 @@ shp_wk_centroids_shifted |>
 
 ### Animation
 
-```{r map-animation, cache=TRUE}
-
+```{r}
 shp_bundeslaender <- shp_wk |> 
   group_by(LAND_NR) |> 
   summarize(geometry = st_union(geometry))
+```
+
+```{r map-animation, cache=TRUE}
 
 p_anim <- shp_wk_erststimmen_gewinner |> 
   select(WKR_NR, wk_gewinner_partei) |> 
@@ -699,5 +701,84 @@ shp_wk |>
   theme(
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank()
+  )
+```
+
+### Fläche Berlin vs. AfD-Wahlkreise
+
+```{r}
+
+# Wahlberechtigte Berlin
+wahlberechtigte_berlin <- df_wk_ergebnisse |>  
+  filter(bundesland == "11") |>
+  distinct(wknr, wahlberechtigte) |> 
+  summarize(sum(wahlberechtigte)) |> 
+  pull()
+wahlberechtigte_berlin
+
+# Fläche Berlin
+area_berlin <- df_wk_abstand_area |> 
+  filter(bundesland == "11") |> 
+  st_drop_geometry() |> 
+  summarize(sum(area_km2))
+
+df_wk_ergebnisse |> 
+  distinct(wknr, wahlberechtigte) |> 
+  inner_join(df_wk_abstand_area, by = "wknr") |> 
+  filter(wk_gewinner_partei == "AfD") |> 
+  select(wknr, wkname, area_km2, wahlberechtigte, wkname) |> 
+  arrange(wahlberechtigte) |> 
+  mutate(
+    wahlberechtigte_cumul = cumsum(wahlberechtigte),
+    area_km2_cumul = cumsum(area_km2))
+
+
+29000.035 / area_berlin
+```
+
+### Einzelbild Centroids für PW Portal
+
+```{r map-centroids-einzeln-pwportal, fig.width=5, fig.height=7, fig.dpi=300}
+shp_wk_erststimmen_gewinner |> 
+  select(WKR_NR, wk_gewinner_partei) |> 
+  mutate(map_type = "Choropleth") |> 
+  bind_rows(
+    shp_wk_centroids_shifted |> 
+      select(WKR_NR = cell_id, wk_gewinner_partei) |> 
+      mutate(map_type = "Centroids")
+  ) |> 
+  st_make_valid() |> 
+  mutate(map_type = factor(map_type, levels = c("Choropleth", "Centroids"))) |>
+  mutate(wk_gewinner_partei = if_else(wk_gewinner_partei %in% c("CDU", "CSU"),
+                                     "CDU/CSU", wk_gewinner_partei),
+         wk_gewinner_partei = factor(wk_gewinner_partei, 
+                                     levels = c("CDU/CSU", "AfD", "SPD", 
+                                                "Grüne", "Die Linke"))) |> 
+  filter(map_type == "Centroids") |> 
+  ggplot(aes(fill = wk_gewinner_partei, col = wk_gewinner_partei)) +
+  geom_sf(
+    data = shp_bundeslaender,
+    inherit.aes = FALSE, fill = "transparent", color = "grey40", linewidth = 0.1) +
+  geom_sf(shape = 21, size = 1, linewidth = 0.1, color = "white") +
+  scale_fill_manual(values = party_pal, aesthetics = list("fill", "color")) +
+  guides(fill = guide_legend(override.aes = list(size = 2, linewidth = 2))) +
+  labs(
+    title = "Gewonnene Wahlkreise nach Parteien",
+    subtitle = "(Erststimmen)",
+    caption = "**Daten:** Bundeswahlleiterin. **Visualisierung:** Ansgar Wolsing",
+    fill = NULL 
+  ) +
+  theme(
+    panel.grid = element_blank(),
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.text.x = element_blank(),
+    plot.title = element_markdown(hjust = 0.5, size = 12),
+    plot.subtitle = element_textbox(hjust = 0.5, halign = 0.5, size = 11),
+    plot.caption = element_textbox(hjust = 0.5, halign = 0.5, size = 7, width = 1.6),
+    legend.position = "bottom",
+    legend.text = element_text(size = 8),
+    legend.justification = "center",
+    legend.key.size = unit(0.15, "cm")
   )
 ```
